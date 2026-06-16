@@ -1,0 +1,22 @@
+# ── AI / 로컬 컨텍스트 ──
+CLAUDE.md
+
+# ── 환경 변수 / 비밀 ──
+.env
+.env.local
+# (.env.example 는 커밋한다)
+
+# ── 업로드 파일 (문서 저장 폴더) ──
+uploads/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── IDE ──
+.idea/
+*.iml
+.vscode/
+
+# ── 로그 ──
+*.log

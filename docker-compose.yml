@@ -1,0 +1,63 @@
+# DevTrack 로컬 개발 인프라 — Oracle + Ollama
+#
+# 사용법
+#   docker compose up -d        # 백그라운드 기동
+#   docker compose ps           # (healthy) 확인 후 진행
+#   docker compose logs -f      # 로그
+#   docker compose down         # 중지 (데이터는 named volume에 보존)
+#
+# 포트 정책 (이 PC의 기존 컨테이너/프로세스와 충돌 방지)
+#   - Oracle  : 다른 Oracle 컨테이너(makeapp-oracle, oracle-xe 등)가 1521을 쓰므로 → host 1522
+#   - Ollama  : 네이티브 Ollama가 11434를 점유 중이므로            → host 11435
+#   값은 .env 로 덮어쓸 수 있다(.env.example 참고).
+
+name: devtrack
+
+services:
+  # ──────────────────────────── Oracle ────────────────────────────
+  oracle:
+    image: gvenzl/oracle-free:23-slim          # 가벼운 Oracle Free 23c
+    container_name: devtrack-oracle
+    ports:
+      - "${ORACLE_PORT:-1522}:1521"            # host 1522 → container 1521
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_SYS_PASSWORD:-oracle}   # SYS / SYSTEM 비밀번호
+      APP_USER: ${DB_USERNAME:-devtrack}                # 앱 전용 계정 자동 생성
+      APP_USER_PASSWORD: ${DB_PASSWORD:-devtrack}
+    volumes:
+      - oracle-data:/opt/oracle/oradata        # DB 데이터 영속화
+    healthcheck:                               # gvenzl 이미지 내장 스크립트 사용
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s                        # 첫 기동(스키마 생성)은 시간이 걸림
+    restart: unless-stopped
+    networks: [devtrack-net]
+
+  # ──────────────────────────── Ollama ────────────────────────────
+  ollama:
+    image: ollama/ollama:0.30.7                # 설치된 네이티브 버전과 동일 (태그 없으면 latest로)
+    container_name: devtrack-ollama
+    ports:
+      - "${OLLAMA_PORT:-11435}:11434"          # host 11435 → container 11434
+    volumes:
+      # 이미 받아 둔 모델(gemma3:4b 등)을 그대로 재사용 → 재다운로드 없음
+      - "${OLLAMA_MODELS_DIR:-D:/data/ollama_data/models}:/root/.ollama/models"
+    restart: unless-stopped
+    networks: [devtrack-net]
+    # ── GPU 가속을 쓰려면 주석 해제 (NVIDIA Container Toolkit 필요) ──
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+volumes:
+  oracle-data:
+
+networks:
+  devtrack-net:
+    driver: bridge
