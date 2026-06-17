@@ -1,3 +1,41 @@
 spring:
   application:
     name: backend
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1522/XEPDB1
+    username: plzjob
+    password: ${DB_PASSWORD:plzjob1234}
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.OracleDialect
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+jwt:
+  secret: ${JWT_SECRET:plz-job-secret-key-must-be-at-least-256-bits-long-please-change-in-prod}
+  access-expiration: 1800000
+  refresh-expiration: 1209600000
+
+oauth:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID:}
+    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:5173/auth/callback/kakao}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:5173/auth/callback/google}
+
+llm:
+  base-url: ${LLM_BASE_URL:http://localhost:11435}
+  model: ${LLM_MODEL:gemma3:4b}
+
+document:
+  upload-dir: ${UPLOAD_DIR:./uploads}
