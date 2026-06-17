@@ -1,43 +1,66 @@
-# ── AI / 로컬 컨텍스트 ──
+# ── 비밀 / 환경 변수 ──
 CLAUDE.md
-
-# ── 환경 변수 / 비밀 ──
-.env
-.env.local
-# (.env.example 는 커밋한다)
-
-# ── 업로드 파일 (문서 저장 폴더) ──
-uploads/
-
-# ── OS ──
-.DS_Store
-Thumbs.db
-
-# ── IDE ──
-.idea/
-*.iml
-.vscode/
-
-# ── 로그 ──
-*.log
-# Dependencies
-node_modules/
-
-# Build output
-dist/
-build/
-
-# Env files (모든 .env 파일 - .env.example 제외)
 .env
 .env.local
 .env.*.local
 .env.development
 .env.production
+# (.env.example 는 커밋한다)
 
-# Editor/OS
+# ── 업로드 파일 ──
+uploads/
+
+# ── Java / Gradle (backend) ──
+backend/HELP.md
+backend/.gradle
+!backend/gradle/wrapper/gradle-wrapper.jar
+backend/bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+backend/out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# ── Node / Vite (frontend) ──
+node_modules/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── 빌드 산출물 ──
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+dist/
+
+# ── IDE / 에디터 ──
+.idea/
+*.iws
+*.iml
+*.ipr
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vscode/*
+!.vscode/extensions.json
+
+# ── OS ──
 .DS_Store
 Thumbs.db
 
-# Logs
+# ── 로그 ──
 *.log
-npm-debug.log*
+logs/
