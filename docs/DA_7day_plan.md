@@ -66,43 +66,48 @@ DA의 필수 책임 범위는 다음과 같다.
 
 ```text
 plz-job/
-├─ etl/
-│  ├─ config/
-│  │  └─ settings.py          # 환경변수 읽기와 설정 검증
-│  ├─ extract/
-│  │  ├─ extract_sample.py    # 승인 전 샘플·공개 파일 수집
-│  │  └─ extract_api.py       # 승인 후 Open API 수집
-│  ├─ transform/
-│  │  ├─ normalize_jobs.py    # 날짜·지역·직무·문자열 표준화
-│  │  └─ extract_stacks.py    # 기술 스택 사전 기반 추출
-│  ├─ aggregate/
-│  │  └─ build_analytics.py   # 월별·기술 스택·지역 집계
-│  ├─ load/
-│  │  ├─ load_hdfs.py
-│  │  └─ load_oracle.py
-│  ├─ common/
-│  │  ├─ hdfs_client.py
-│  │  ├─ oracle_client.py
-│  │  ├─ logger.py
-│  │  └─ exceptions.py
-│  ├─ tests/
-│  │  ├─ test_transform.py
-│  │  └─ test_aggregate.py
-│  ├─ run_pipeline.py         # 전체 실행과 etl_runs 기록
-│  └─ requirements.txt
-├─ data/
-│  ├─ sample/                 # 공개 파일 또는 저장된 샘플 응답
-│  └─ dict/
-│     ├─ tech_stack_dict.csv
-│     ├─ region_map.csv
-│     └─ position_map.csv
-├─ docs/
-│  ├─ data_source_spec.md     # 데이터 소스 정의서
-│  ├─ data_dictionary.md      # 표준 컬럼과 전처리 기준
-│  └─ etl_runbook.md          # 실행·복구·검증 방법
-├─ .env.example
-└─ .gitignore
+├─ backend/                      # BE 담당 영역 (DA 작업 대상 아님)
+├─ frontend/                     # FE 담당 영역 (DA 작업 대상 아님)
+├─ docs/                         # 팀 공용 문서 (요구사항·플랜·DB 설계서 등)
+└─ data/                         # ★ DA 작업 영역 — DA는 이 폴더 하위에서만 작업
+   ├─ etl/
+   │  ├─ config/
+   │  │  └─ settings.py          # 환경변수 읽기와 설정 검증
+   │  ├─ extract/
+   │  │  ├─ extract_sample.py    # 승인 전 샘플·공개 파일 수집
+   │  │  └─ extract_api.py       # 승인 후 Open API 수집
+   │  ├─ transform/
+   │  │  ├─ normalize_jobs.py    # 날짜·지역·직무·문자열 표준화
+   │  │  └─ extract_stacks.py    # 기술 스택 사전 기반 추출
+   │  ├─ aggregate/
+   │  │  └─ build_analytics.py   # 월별·기술 스택·지역 집계
+   │  ├─ load/
+   │  │  ├─ load_hdfs.py
+   │  │  └─ load_oracle.py
+   │  ├─ common/
+   │  │  ├─ hdfs_client.py
+   │  │  ├─ oracle_client.py
+   │  │  ├─ logger.py
+   │  │  └─ exceptions.py
+   │  ├─ tests/
+   │  │  ├─ test_transform.py
+   │  │  └─ test_aggregate.py
+   │  ├─ run_pipeline.py         # 전체 실행과 etl_runs 기록
+   │  └─ requirements.txt
+   ├─ sample/                    # 공개 파일 또는 저장된 샘플 응답
+   ├─ dict/
+   │  ├─ tech_stack_dict.csv
+   │  ├─ region_map.csv
+   │  └─ position_map.csv
+   ├─ docs/                      # DA 전용 문서
+   │  ├─ data_source_spec.md     # 데이터 소스 정의서
+   │  ├─ data_dictionary.md      # 표준 컬럼과 전처리 기준
+   │  └─ etl_runbook.md          # 실행·복구·검증 방법
+   └─ .env.example
 ```
+
+> - DA 모든 산출물은 `plz-job/data/` 하위에 둔다. `backend/`, `frontend/`, 공용 `docs/`는 DA 작업 대상이 아니다.
+> - 비밀정보·무시 규칙은 루트 통합 `.gitignore`로 관리하며, DA는 여기에 Python 무시 규칙(`__pycache__/`, `*.pyc`, `.venv/`, 로컬 적재 산출물)을 추가한다. `data/.env`는 루트 `.gitignore`의 `.env` 패턴으로 이미 제외되고 `data/.env.example`만 커밋한다.
 
 **권장 라이브러리:** `requests`, `pandas`, `pyarrow`, `oracledb`, `python-dotenv`, HDFS 연결용 `hdfs` 또는 WebHDFS `requests`, 표준 `logging`.
 
@@ -201,7 +206,7 @@ analytics_region_jobs
 - [ ] 고용24·워크넷 채용정보, 공공기관 채용정보, 고용행정통계 중 **주 데이터 소스 1개와 예비 데이터 소스 1개**를 선정하고 Open API를 신청한다.
 - [ ] 신청 승인 기간, 호출 제한, 이용 조건, 응답 형식(JSON/XML), 페이지네이션 방식을 확인한다.
 - [ ] 회사명, 공고명, URL, 직무, 지역, 게시일, 마감일, 공고 본문 또는 요구 기술 필드 제공 여부를 확인한다.
-- [ ] `docs/data_source_spec.md`에 원본 필드와 Processed 표준 컬럼의 매핑표를 작성한다.
+- [ ] `data/docs/data_source_spec.md`에 원본 필드와 Processed 표준 컬럼의 매핑표를 작성한다.
 - [ ] 샘플 응답 또는 공개 파일을 `data/sample/`에 확보한다.
 - [ ] NameNode·WebHDFS 주소, 포트, 계정, 권한을 확인하고 생성·쓰기·읽기·삭제 테스트를 수행한다.
 - [ ] 다음 HDFS 디렉터리를 생성한다.
@@ -217,7 +222,7 @@ analytics_region_jobs
 - [ ] `market_job_postings`, `market_job_stacks`, `analytics_*`, `etl_runs`의 컬럼·키·자료형을 BE와 합의한다.
 - [ ] 분석 테이블의 `region`, `position` 필터 정합성 문제를 해결한다.
 - [ ] 분석 API 응답에 포함할 `baseDate`, `sampleCount`, `dataAvailable` 메타 필드를 합의한다.
-- [ ] ETL 디렉터리, `.env.example`, `.gitignore`, `requirements.txt`, 공통 로거를 생성한다.
+- [ ] `data/etl` 디렉터리, `data/.env.example`, `data/etl/requirements.txt`, 공통 로거를 생성하고, 루트 통합 `.gitignore`에 Python 무시 규칙을 추가한다.
 
 ### 완료 조건
 
@@ -293,7 +298,7 @@ NodeJS, Node.js → Node.js
 /plz-job/processed/base_date=YYYY-MM-DD/
 ```
 
-- [ ] `docs/data_dictionary.md`에 컬럼 정의, 자료형, 허용값, 결측 처리, 표준화 규칙을 기록한다.
+- [ ] `data/docs/data_dictionary.md`에 컬럼 정의, 자료형, 허용값, 결측 처리, 표준화 규칙을 기록한다.
 - [ ] 변환 테스트를 작성한다.
   - 날짜 정상·비정상 입력
   - 지역 별칭
@@ -530,7 +535,7 @@ DA는 시장 기술 스택·지역 데이터를 제공하고, 개인 월별 지�
 | 표본 부족으로 비율 왜곡 | 표본 수 표시, 분모 0은 데이터 부족 처리, 예측 대신 기술통계 사용 |
 | 팀별 직무·지역·스택 명칭 불일치 | 공통 코드·표준 명칭을 3일차 전에 고정 |
 | 기능 과다 | 5일차 이후 신규 기능 금지, TF-IDF·유사도는 필수 통합 후에만 수행 |
-| 비밀정보 노출 | `.env`, `.gitignore`, 로그 마스킹, 샘플 키만 문서화 |
+| 비밀정보 노출 | `data/.env`, 루트 `.gitignore`, 로그 마스킹, 샘플 키만 문서화 |
 
 ---
 
@@ -539,7 +544,7 @@ DA는 시장 기술 스택·지역 데이터를 제공하고, 개인 월별 지�
 ### 1. 파이프라인 실행
 
 ```bash
-python etl/run_pipeline.py --source sample --base-date YYYY-MM-DD
+python data/etl/run_pipeline.py --source sample --base-date YYYY-MM-DD
 ```
 
 ### 2. HDFS 파일 확인

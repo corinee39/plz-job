@@ -64,3 +64,17 @@ Thumbs.db
 # ── 로그 ──
 *.log
 logs/
+
+# ── Python (DA / etl) ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+.ipynb_checkpoints/
+etl/logs/
+etl/data/raw/          # 다운로드 원본(대용량) — HDFS가 원천이므로 git 제외
+etl/data/processed/    # 로컬 전처리 산출물
