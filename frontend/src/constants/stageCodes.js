@@ -17,3 +17,26 @@ export const STAGE_CODES = {
 };
 
 export const STAGE_KEYS = Object.keys(STAGE_CODES);
+
+export const SCHEDULE_TYPE_LABELS = {
+  DEADLINE: "마감",
+  CODING_TEST: "코딩테스트",
+  INTERVIEW: "면접",
+  ETC: "기타",
+};
+
+export const DOCUMENT_TYPE_LABELS = {
+  RESUME: "이력서",
+  COVER_LETTER: "자기소개서",
+};
+
+export const RETRO_TYPE_LABELS = {
+  CODING_TEST: "코딩테스트",
+  INTERVIEW: "면접",
+};
+
+export const DIFFICULTY_LABELS = {
+  EASY: "쉬움",
+  NORMAL: "보통",
+  HARD: "어려움",
+};
