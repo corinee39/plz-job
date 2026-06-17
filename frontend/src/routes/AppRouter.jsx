@@ -3,6 +3,7 @@ import { AppLayout } from "../components/layout/AppLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 import LoginPage from "../pages/LoginPage";
+import OAuthCallbackPage from "../pages/OAuthCallbackPage";
 import DashboardPage from "../pages/DashboardPage";
 import JobPostingListPage from "../pages/JobPostingListPage";
 import JobPostingFormPage from "../pages/JobPostingFormPage";
@@ -18,6 +19,7 @@ export function AppRouter() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>

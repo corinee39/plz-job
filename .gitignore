@@ -27,10 +27,12 @@ node_modules/
 dist/
 build/
 
-# Env files
+# Env files (모든 .env 파일 - .env.example 제외)
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
 
 # Editor/OS
 .DS_Store
