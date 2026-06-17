@@ -29,7 +29,7 @@ docker compose ps          # oracle 이 (healthy) 될 때까지 대기
 cd backend
 ./gradlew bootRun
 ```
-- Oracle: `jdbc:oracle:thin:@localhost:1522/FREEPDB1` (계정 `devtrack/devtrack`)
+- Oracle: `jdbc:oracle:thin:@localhost:1522/XEPDB1` (Service=XEPDB1, 계정 `plzjob` / `.env`의 `DB_PASSWORD`)
 - Ollama: `http://localhost:11435`
 - 포트·계정은 루트 `.env`로 변경 가능(`.env.example` 참고).
 
