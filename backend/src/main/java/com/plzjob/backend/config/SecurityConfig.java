@@ -3,6 +3,7 @@ package com.plzjob.backend.config;
 import com.plzjob.backend.auth.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -32,6 +33,9 @@ public class SecurityConfig {
                 cfg.setAllowCredentials(true);
                 return cfg;
             }))
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint((req, res, ex) ->
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated())
