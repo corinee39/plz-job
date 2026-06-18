@@ -76,5 +76,7 @@ venv/
 .coverage
 .ipynb_checkpoints/
 etl/logs/
-etl/data/raw/          # 다운로드 원본(대용량) — HDFS가 원천이므로 git 제외
-etl/data/processed/    # 로컬 전처리 산출물
+# 다운로드 원본(대용량) — HDFS가 원천이므로 git 제외
+etl/data/raw/
+# 로컬 전처리 산출물
+etl/data/processed/
