@@ -7,6 +7,16 @@ from etl.extract.sources import SOURCES
 
 RAW_DIR = settings.DATA_DIR / "raw"
 
+
+def _dig(d, *keys):
+    """중첩 dict 안전 접근: 경로 중 하나라도 dict가 아니면 None."""
+    for k in keys:
+        if not isinstance(d, dict):
+            return None
+        d = d.get(k)
+    return d
+
+
 # 원본 필드 → 표준 필드 (1일차 data_source_spec.md 확정)
 FIELD_MAP = {
     "alio": lambda r: {
@@ -31,6 +41,17 @@ FIELD_MAP = {
         "posted_date_raw": r.get("begindate") or r.get("regdate"),
         "deadline_raw": r.get("enddate"),
         "description": clean_text(r.get("contents")),
+    },
+    "saramin": lambda r: {
+        "company_name": _dig(r, "company", "detail", "name"),
+        "title": _dig(r, "position", "title"),
+        "url": r.get("url") or "",
+        "external_raw_id": r.get("id"),
+        "position_raw": _dig(r, "position", "job-code", "name"),     # 직무명(콤마구분)
+        "region_raw": _dig(r, "position", "location", "name"),       # "서울 > 강남구"
+        "posted_date_raw": (r.get("posting-date") or "")[:10],       # 'YYYY-MM-DD HH:MM:SS'→앞 10자
+        "deadline_raw": (r.get("expiration-date") or "")[:10],
+        "description": r.get("keyword") or "",                       # 기술스택 태그 → 스택 추출원
     },
 }
 

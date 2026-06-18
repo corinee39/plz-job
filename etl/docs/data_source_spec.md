@@ -6,8 +6,9 @@
 | alio | 재정경제부_공공기관 채용정보 | https://apis.data.go.kr/1051000/recruitment | `/list`(목록), `/detail`(단건) | 일반 인증키 | **JSON** | (확인) | 주 소스. 목록 totalCount=111,020 |
 | mpm | 인사혁신처_공공취업정보 | https://apis.data.go.kr/1760000/PblJobService | `/getList`(목록), `/getItem`(단건) | 일반 인증키(공용) | **XML** | (확인) | 보조. url·본문은 단건에만 |
 | kosis | KOSIS 공유서비스 | https://kosis.kr/openapi | `statisticsSearch.do`(통합검색), `Param/statisticsParameterData.do`(자료) | 별도 인증키(`apiKey`) | **JSON** | (확인) | 통계 보조. 집계 소스(공고 단위 아님) |
+| saramin | 사람인 채용정보 | https://oapi.saramin.co.kr | `/job-search`(목록, keyword 포함 → 단건 불필요) | 별도 `access-key` | **JSON**(`Accept` 헤더) | 1일 500회 | IT 소스. `job_mid_cd=22`(IT개발·데이터). 직무·기술스택 분석 대상 |
 
-> data.go.kr 일반 인증키는 계정당 1개를 구독 API 전체에 재사용(alio·mpm 공용).
+> data.go.kr 일반 인증키는 계정당 1개를 구독 API 전체에 재사용(alio·mpm 공용). 사람인은 별도 발급한 `access-key`를 `etl/.env`의 `SARAMIN_ACCESS_KEY`에 둔다.
 
 **로컬 보유 파일 (API 외 — 연습·사전용, 출처가 alio/mpm/kosis와 다름):**
 | 위치(source) | 파일 | 용도 |

@@ -30,6 +30,7 @@ HDFS_ROOT = os.getenv("HDFS_ROOT", "/plz-job")
 DATA_SOURCE = os.getenv("DATA_SOURCE", "alio")
 DATA_GO_KR_SERVICE_KEY = os.getenv("DATA_GO_KR_SERVICE_KEY", "")
 KOSIS_API_KEY = os.getenv("KOSIS_API_KEY", "")
+SARAMIN_ACCESS_KEY = os.getenv("SARAMIN_ACCESS_KEY", "")        # 사람인 IT 채용(별도 발급)
 
 # Extract 튜닝 (2일차) — .env로 덮어쓰기 가능
 EXTRACT_NUM_ROWS = int(os.getenv("EXTRACT_NUM_ROWS", "100"))    # 페이지당 건수
@@ -44,6 +45,8 @@ HTTP_BACKOFF = float(os.getenv("HTTP_BACKOFF", "1.5"))          # 재시도 대�
 ALIO_API_URL = os.getenv("ALIO_API_URL", "")
 MPM_API_URL = os.getenv("MPM_API_URL", "")
 KOSIS_API_URL = os.getenv("KOSIS_API_URL", "https://kosis.kr/openapi")
+SARAMIN_API_URL = os.getenv("SARAMIN_API_URL", "https://oapi.saramin.co.kr")
+SARAMIN_JOB_MID_CD = os.getenv("SARAMIN_JOB_MID_CD", "22")      # 상위 직무: IT개발·데이터
 
 
 if __name__ == "__main__":

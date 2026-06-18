@@ -35,6 +35,22 @@ def _mpm_item_parse(content: bytes) -> dict:
     return {c.tag: c.text for c in item} if item is not None else {}
 
 
+def _saramin_params(page: int) -> dict:
+    """사람인(JSON): IT개발·데이터(job_mid_cd=22) 최신순. start는 0기반."""
+    return {"access-key": settings.SARAMIN_ACCESS_KEY,
+            "job_mid_cd": settings.SARAMIN_JOB_MID_CD,
+            "fields": "posting-date+expiration-date+keyword",  # keyword=기술스택 태그
+            "sort": "pd", "count": settings.EXTRACT_NUM_ROWS, "start": page - 1}
+
+
+def _saramin_parse(content: bytes):
+    """사람인(JSON): (공고 리스트, 전체 건수). jobs.job은 단건이면 dict일 수 있음."""
+    jobs = (json.loads(content).get("jobs") or {})
+    job = jobs.get("job") or []
+    records = job if isinstance(job, list) else [job]
+    return records, int(jobs.get("total", 0) or 0)
+
+
 SOURCES = {
     "alio": {"url": f"{settings.ALIO_API_URL}/list", "ext": "json",
              "id_field": "recrutPblntSn", "url_field": "srcUrl",
@@ -45,4 +61,9 @@ SOURCES = {
             "build_params": _mpm_params, "parse": _mpm_parse,
             "detail": {"url": f"{settings.MPM_API_URL}/getItem", "id_param": "idx",
                        "body_field": "contents", "parse": _mpm_item_parse}},
+    "saramin": {"url": f"{settings.SARAMIN_API_URL}/job-search", "ext": "json",
+                "id_field": "id", "url_field": "url",
+                "headers": {"Accept": "application/json"},      # 없으면 XML 응답
+                "build_params": _saramin_params, "parse": _saramin_parse,
+                "detail": None},                                # keyword가 목록에 있음 → 단건 불필요
 }

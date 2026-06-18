@@ -10,12 +10,12 @@ from etl.common.exceptions import ExtractError
 log = get_logger("http")
 
 
-def get(url: str, params: dict) -> requests.Response:
+def get(url: str, params: dict, headers: dict | None = None) -> requests.Response:
     timeout = (settings.HTTP_TIMEOUT_CONNECT, settings.HTTP_TIMEOUT_READ)
     last = None
     for attempt in range(1, settings.HTTP_MAX_RETRIES + 1):
         try:
-            r = requests.get(url, params=params, timeout=timeout)
+            r = requests.get(url, params=params, headers=headers, timeout=timeout)
             if r.status_code == 200:
                 return r
             last = f"HTTP {r.status_code}"

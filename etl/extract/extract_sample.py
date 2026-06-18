@@ -29,3 +29,4 @@ if __name__ == "__main__":
     sd = settings.DATA_DIR / "sample"
     extract_from_files("alio", [sd / "alio_sample.json"])
     extract_from_files("mpm", [sd / "mpm_sample.xml"])
+    extract_from_files("saramin", [sd / "saramin_sample.json"])

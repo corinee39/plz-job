@@ -1,0 +1,135 @@
+{
+  "jobs": {
+    "count": 6,
+    "start": 0,
+    "total": "20000",
+    "job": [
+      {
+        "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=49000001",
+        "active": 1,
+        "company": { "detail": { "href": "https://www.saramin.co.kr/...", "name": "테크크루(주)" } },
+        "position": {
+          "title": "백엔드 개발자 (Java/Spring Boot)",
+          "industry": { "code": "201", "name": "솔루션·SI·ERP·CRM" },
+          "location": { "code": "101010", "name": "서울 > 강남구" },
+          "job-type": { "code": "1", "name": "정규직" },
+          "job-mid-code": { "code": "22", "name": "IT개발·데이터" },
+          "job-code": { "code": "201,202", "name": "백엔드개발,서버개발,웹개발" },
+          "experience-level": { "code": 2, "min": 3, "max": 7, "name": "경력 3~7년" },
+          "required-education-level": { "code": "8", "name": "대학교졸업(4년)이상" }
+        },
+        "keyword": "Java,Spring Boot,JPA,MySQL,AWS,Docker,Git",
+        "salary": { "code": "0", "name": "회사내규에 따름" },
+        "id": "49000001",
+        "posting-timestamp": "1750032000",
+        "posting-date": "2026-06-15 09:00:00",
+        "expiration-date": "2026-07-15 23:59:59"
+      },
+      {
+        "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=49000002",
+        "active": 1,
+        "company": { "detail": { "href": "https://www.saramin.co.kr/...", "name": "프론트랩" } },
+        "position": {
+          "title": "프론트엔드 개발자 (React)",
+          "industry": { "code": "202", "name": "웹에이전시" },
+          "location": { "code": "102020", "name": "경기 > 성남시 분당구" },
+          "job-type": { "code": "1", "name": "정규직" },
+          "job-mid-code": { "code": "22", "name": "IT개발·데이터" },
+          "job-code": { "code": "203", "name": "프론트엔드개발,웹퍼블리셔" },
+          "experience-level": { "code": 1, "min": 1, "max": 3, "name": "경력 1~3년" },
+          "required-education-level": { "code": "0", "name": "학력무관" }
+        },
+        "keyword": "React,React.js,TypeScript,JavaScript,Vue.js,Git",
+        "salary": { "code": "0", "name": "회사내규에 따름" },
+        "id": "49000002",
+        "posting-timestamp": "1749945600",
+        "posting-date": "2026-06-14 10:30:00",
+        "expiration-date": "2026-07-10 23:59:59"
+      },
+      {
+        "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=49000003",
+        "active": 1,
+        "company": { "detail": { "href": "https://www.saramin.co.kr/...", "name": "데이터스퀘어" } },
+        "position": {
+          "title": "데이터 엔지니어 (Python/SQL)",
+          "industry": { "code": "203", "name": "빅데이터·AI" },
+          "location": { "code": "101050", "name": "서울 > 마포구" },
+          "job-type": { "code": "1", "name": "정규직" },
+          "job-mid-code": { "code": "22", "name": "IT개발·데이터" },
+          "job-code": { "code": "204", "name": "데이터엔지니어,데이터분석" },
+          "experience-level": { "code": 2, "min": 2, "max": 5, "name": "경력 2~5년" },
+          "required-education-level": { "code": "8", "name": "대학교졸업(4년)이상" }
+        },
+        "keyword": "Python,SQL,PostgreSQL,MongoDB,Docker,Kubernetes",
+        "salary": { "code": "0", "name": "회사내규에 따름" },
+        "id": "49000003",
+        "posting-timestamp": "1749859200",
+        "posting-date": "2026-06-13 14:00:00",
+        "expiration-date": "2026-07-05 23:59:59"
+      },
+      {
+        "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=49000004",
+        "active": 1,
+        "company": { "detail": { "href": "https://www.saramin.co.kr/...", "name": "클라우드웨이브(주)" } },
+        "position": {
+          "title": "DevOps / 인프라 엔지니어",
+          "industry": { "code": "204", "name": "클라우드" },
+          "location": { "code": "201010", "name": "부산 > 해운대구" },
+          "job-type": { "code": "1", "name": "정규직" },
+          "job-mid-code": { "code": "22", "name": "IT개발·데이터" },
+          "job-code": { "code": "205", "name": "DevOps,시스템엔지니어" },
+          "experience-level": { "code": 3, "min": 5, "max": 10, "name": "경력 5~10년" },
+          "required-education-level": { "code": "0", "name": "학력무관" }
+        },
+        "keyword": "Kubernetes,k8s,Docker,AWS,Git,Java",
+        "salary": { "code": "0", "name": "회사내규에 따름" },
+        "id": "49000004",
+        "posting-timestamp": "1749772800",
+        "posting-date": "2026-06-12 11:00:00",
+        "expiration-date": "2026-07-12 23:59:59"
+      },
+      {
+        "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=49000005",
+        "active": 1,
+        "company": { "detail": { "href": "https://www.saramin.co.kr/...", "name": "풀스택스튜디오" } },
+        "position": {
+          "title": "풀스택 개발자 (Node.js/React)",
+          "industry": { "code": "202", "name": "웹에이전시" },
+          "location": { "code": "101010", "name": "서울 > 송파구" },
+          "job-type": { "code": "1", "name": "정규직" },
+          "job-mid-code": { "code": "22", "name": "IT개발·데이터" },
+          "job-code": { "code": "206", "name": "풀스택개발,웹개발" },
+          "experience-level": { "code": 0, "min": 0, "max": 0, "name": "신입" },
+          "required-education-level": { "code": "0", "name": "학력무관" }
+        },
+        "keyword": "Node.js,React,JavaScript,MongoDB,TypeScript,AWS",
+        "salary": { "code": "0", "name": "회사내규에 따름" },
+        "id": "49000005",
+        "posting-timestamp": "1749686400",
+        "posting-date": "2026-06-11 16:20:00",
+        "expiration-date": "2026-06-30 23:59:59"
+      },
+      {
+        "url": "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=49000006",
+        "active": 1,
+        "company": { "detail": { "href": "https://www.saramin.co.kr/...", "name": "에이아이랩(주)" } },
+        "position": {
+          "title": "머신러닝 엔지니어 (AI)",
+          "industry": { "code": "203", "name": "빅데이터·AI" },
+          "location": { "code": "301010", "name": "대전 > 유성구" },
+          "job-type": { "code": "1", "name": "정규직" },
+          "job-mid-code": { "code": "22", "name": "IT개발·데이터" },
+          "job-code": { "code": "207", "name": "인공지능,머신러닝,데이터분석" },
+          "experience-level": { "code": 2, "min": 3, "max": 6, "name": "경력 3~6년" },
+          "required-education-level": { "code": "9", "name": "석사이상" }
+        },
+        "keyword": "Python,머신러닝,딥러닝,SQL,Docker,AWS",
+        "salary": { "code": "0", "name": "회사내규에 따름" },
+        "id": "49000006",
+        "posting-timestamp": "1749600000",
+        "posting-date": "2026-06-10 09:45:00",
+        "expiration-date": "2026-07-20 23:59:59"
+      }
+    ]
+  }
+}

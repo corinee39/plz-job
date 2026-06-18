@@ -71,7 +71,7 @@ def extract(source: str, collected_date: str | None = None) -> dict:
     ids: list = []                                          # 2단계(getItem)용 idx 수집
     for page in range(1, settings.EXTRACT_MAX_PAGES + 1):
         try:
-            resp = get(cfg["url"], cfg["build_params"](page))
+            resp = get(cfg["url"], cfg["build_params"](page), cfg.get("headers"))
             items, total = cfg["parse"](resp.content)
         except (ExtractError, ValueError) as e:             # 호출/파싱 실패 격리
             errors += 1
