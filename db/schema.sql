@@ -393,5 +393,4 @@ BEGIN
                    || 'UNIQUE (base_month, position, region, sigungu)';
   END IF;
 END;
-/
 -- 검증: DESC ANALYTICS_REGION_JOBS;  (sigungu 컬럼 + 4컬럼 UNIQUE 확인)
