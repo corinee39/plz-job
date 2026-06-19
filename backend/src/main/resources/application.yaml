@@ -26,6 +26,7 @@ jwt:
   secret: ${JWT_SECRET:plz-job-secret-key-must-be-at-least-256-bits-long-please-change-in-prod}
   access-expiration: 1800000
   refresh-expiration: 1209600000
+  log-token: ${JWT_LOG_TOKEN:false}   # DEV 전용: 로그인 시 발급 JWT를 로그로 출력(운영은 false 유지)
 
 oauth:
   kakao:
