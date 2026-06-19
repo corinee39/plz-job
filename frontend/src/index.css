@@ -23,10 +23,43 @@ body {
   margin: 0;
 }
 
+/* react-big-calendar 이벤트 — 기본 흰색 텍스트 상속 차단, 자동 시간 레이블 숨김 */
+.rbc-event {
+  color: inherit !important;
+}
+.rbc-day-slot .rbc-event {
+  min-height: 72px !important;
+}
+.rbc-event-content {
+  height: auto !important;
+  overflow: hidden;
+}
+.rbc-event-label {
+  display: none !important;
+}
+
+/* react-big-calendar 주 뷰 시간 구분선 — 점선으로 약하게, 칸 높이 확보 */
+.rbc-timeslot-group {
+  border-bottom: 1px dashed #e4e4e7;
+  min-height: 80px !important;
+}
+.rbc-time-slot {
+  border-top: none !important;
+}
+.rbc-time-content > * + * > * {
+  border-left: 1px solid #e4e4e7;
+}
+
 /* react-big-calendar 다크모드 오버라이드 — .dark 클래스 기반 */
 .dark .rbc-calendar {
   color: #e4e4e7;
   background-color: transparent;
+}
+.dark .rbc-timeslot-group {
+  border-bottom: 1px dashed #3f3f46;
+}
+.dark .rbc-time-content > * + * > * {
+  border-left-color: #3f3f46;
 }
 .dark .rbc-month-view,
 .dark .rbc-time-view,
@@ -36,8 +69,6 @@ body {
 .dark .rbc-header + .rbc-header,
 .dark .rbc-day-bg + .rbc-day-bg,
 .dark .rbc-month-row + .rbc-month-row,
-.dark .rbc-timeslot-group,
-.dark .rbc-time-slot,
 .dark .rbc-agenda-view table.rbc-agenda-table,
 .dark .rbc-agenda-view table.rbc-agenda-table tbody > tr > td + td,
 .dark .rbc-agenda-view table.rbc-agenda-table tbody > tr + tr,
