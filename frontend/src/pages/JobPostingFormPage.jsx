@@ -28,17 +28,13 @@ export default function JobPostingFormPage() {
   const preview = useMutation({
     mutationFn: () => previewJobPosting(urlInput),
     onSuccess: (data) => {
-      const ex = data.extracted ?? {};
+      // 백엔드 PreviewResult 는 래퍼 없는 평면 구조: companyName·title·description 만 추출(§4.1)
       setForm((f) => ({
         ...f,
         url: data.sourceUrl ?? urlInput,
-        companyName: ex.companyName ?? f.companyName,
-        title: ex.title ?? f.title,
-        position: ex.position ?? f.position,
-        region: ex.region ?? f.region,
-        startDate: ex.startDate ?? f.startDate,
-        deadline: ex.deadline ?? f.deadline,
-        techStacks: ex.techStacks ? ex.techStacks.join(", ") : f.techStacks,
+        companyName: data.companyName ?? f.companyName,
+        title: data.title ?? f.title,
+        description: data.description ?? f.description,
       }));
       setExtractInfo({ status: data.extractStatus, missing: data.missingFields ?? [] });
     },
