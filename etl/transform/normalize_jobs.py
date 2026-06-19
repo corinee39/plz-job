@@ -14,11 +14,18 @@ DICT_DIR = settings.DATA_DIR / "dict"
 
 
 def _load_region_map():
-    m = {}
+    """region_map.csv → (시·도 별칭 dict, 시·군·구 별칭 dict)."""
+    sido, sigungu = {}, {}
     with open(DICT_DIR / "region_map.csv", encoding="utf-8-sig") as f:
         for row in csv.DictReader(f):
-            m[row["alias"].strip()] = row["sido"].strip()
-    return m
+            alias = row["alias"].strip()
+            sd = (row.get("sido") or "").strip()
+            sg = (row.get("sigungu") or "").strip()
+            if alias and sd:
+                sido[alias] = sd
+            if alias and sg:
+                sigungu[alias] = sg
+    return sido, sigungu
 
 
 def _load_position_rules():
@@ -40,6 +47,22 @@ def _first_sido(region_raw, region_map):
     return region_map.get(token, "미분류")
 
 
+def _sigungu(region_raw, sigungu_map):
+    """region_raw의 '>' 뒤를 시·군·구로 추출. 별칭은 매핑 보정, 없으면 가장 구체적(뒤) 토큰."""
+    if not region_raw or ">" not in region_raw:
+        return ""
+    part = region_raw.split(">", 1)[1].strip()            # "서울 > 강남구" → "강남구"
+    if not part:
+        return ""
+    if part in sigungu_map:                               # 전체 표기 별칭(예: 성남시 분당구)
+        return sigungu_map[part]
+    tokens = part.replace(",", " ").split()
+    for t in reversed(tokens):                            # 별칭 토큰(예: 판교) 우선 보정
+        if t in sigungu_map:
+            return sigungu_map[t]
+    return tokens[-1] if tokens else ""                   # 매핑 없으면 원본 시·군·구 사용
+
+
 def _classify_position(text, rules):
     for pat, pos in rules:
         if pat.search(text or ""):
@@ -48,7 +71,7 @@ def _classify_position(text, rules):
 
 
 def normalize(source: str, records: list, base_date: str) -> pd.DataFrame:
-    region_map = _load_region_map()
+    sido_map, sigungu_map = _load_region_map()
     pos_rules = _load_position_rules()
 
     rows = []
@@ -66,8 +89,8 @@ def normalize(source: str, records: list, base_date: str) -> pd.DataFrame:
             "position_raw": position_raw,
             "position": _classify_position(f"{title} {position_raw} {description}", pos_rules),
             "region_raw": region_raw,
-            "sido": _first_sido(region_raw, region_map),
-            "sigungu": "",                                # 시·군·구는 소스에 없을 때가 많음
+            "sido": _first_sido(region_raw, sido_map),
+            "sigungu": _sigungu(region_raw, sigungu_map),
             "posted_date": to_iso_date(r.get("posted_date_raw")),
             "posted_date_raw": r.get("posted_date_raw"),
             "deadline": to_iso_date(r.get("deadline_raw")),

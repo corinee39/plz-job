@@ -52,11 +52,12 @@ VALUES (SEQ_ANALYTICS_MONTHLY.NEXTVAL, :base_month, :position, :region, :posting
 SQL_REGION = """
 MERGE INTO analytics_region_jobs t
 USING (SELECT :base_month AS base_month, :position AS position,
-              :region AS region FROM dual) s
-ON (t.base_month=s.base_month AND t.position=s.position AND t.region=s.region)
+              :region AS region, :sigungu AS sigungu FROM dual) s
+ON (t.base_month=s.base_month AND t.position=s.position
+    AND t.region=s.region AND t.sigungu=s.sigungu)
 WHEN MATCHED THEN UPDATE SET posting_count=:posting_count
-WHEN NOT MATCHED THEN INSERT (id, base_month, position, region, posting_count)
-VALUES (SEQ_ANALYTICS_REGION.NEXTVAL, :base_month, :position, :region, :posting_count)
+WHEN NOT MATCHED THEN INSERT (id, base_month, position, region, sigungu, posting_count)
+VALUES (SEQ_ANALYTICS_REGION.NEXTVAL, :base_month, :position, :region, :sigungu, :posting_count)
 """
 
 SQL_TREND = """
@@ -168,10 +169,11 @@ def run(base_date: str | None = None):
         log.info("market_job_stacks MERGE %d행", len(srows))
 
         cur.executemany(SQL_MONTHLY, _records(monthly))
-        cur.executemany(SQL_REGION, _records(region))
+        cur.executemany(SQL_REGION, _records(region))     # region_jobs: 시·도 + sigungu(ALL 롤업 포함)
         if len(trends):
             cur.executemany(SQL_TREND, _records(trends))
-        log.info("analytics MERGE | 월별 %d · 지역 %d · 추세 %d", len(monthly), len(region), len(trends))
+        log.info("analytics MERGE | 월별 %d · 지역(시군구포함) %d · 추세 %d",
+                 len(monthly), len(region), len(trends))
 
         _record_run(cur, base_date, extracted=len(postings), loaded=len(postings) + len(srows))
         conn.commit()                                     # 모든 단계 성공 시에만 커밋

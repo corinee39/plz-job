@@ -41,7 +41,10 @@ def _fact(postings: pd.DataFrame) -> pd.DataFrame:
     df["base_month"] = _base_month(df)
     df["position"] = df["position"].fillna("기타")
     df["region"] = df["sido"].fillna("미분류")
-    return df[["uid", "base_month", "position", "region"]]
+    if "sigungu" not in df.columns:
+        df["sigungu"] = ""
+    df["sigungu"] = df["sigungu"].fillna("").astype(str).str.strip().replace("", "미분류")
+    return df[["uid", "base_month", "position", "region", "sigungu"]]
 
 
 def _count_unique(fact: pd.DataFrame, roll_position: bool, roll_region: bool) -> pd.DataFrame:
@@ -61,9 +64,24 @@ def build_monthly(fact: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True)
 
 
+def _count_region(fact: pd.DataFrame, roll_position: bool, roll_sigungu: bool) -> pd.DataFrame:
+    """(base_month, position, region, sigungu)별 고유 공고 수. position·sigungu만 ALL 롤업."""
+    g = fact.copy()
+    if roll_position:
+        g["position"] = ALL
+    if roll_sigungu:
+        g["sigungu"] = ALL
+    return (g.groupby(["base_month", "position", "region", "sigungu"])["uid"]
+             .nunique().reset_index(name="posting_count"))
+
+
 def build_region(fact: pd.DataFrame) -> pd.DataFrame:
-    """지역 분포: region은 실제값만(ALL 없음), position은 실제/ALL 둘 다."""
-    parts = [_count_unique(fact, rp, False) for rp in (False, True)]
+    """지역 분포: region(시·도)은 실제값만, sigungu(시·군·구)·position은 실제/ALL 롤업.
+
+    sigungu='ALL' 행 = 시·도 합계(필터 미지정 시 BE가 'AND sigungu=ALL'로 조회),
+    실제 sigungu = 구 단위 드릴다운. position도 'ALL' 센티넬과 동일 규칙."""
+    parts = [_count_region(fact, rp, rsg)
+             for rp in (False, True) for rsg in (False, True)]
     return pd.concat(parts, ignore_index=True)
 
 
@@ -103,7 +121,7 @@ def run(base_date: str | None = None):
     postings, stacks = _read_processed(base_date)
     fact = _fact(postings)
     monthly = build_monthly(fact)
-    region = build_region(fact)
+    region = build_region(fact)                           # region_jobs: 시·도 + sigungu(ALL 롤업 포함)
     trends = build_stack_trends(fact, stacks, monthly)
 
     out_dir = AGG_DIR / f"base_date={base_date}"
@@ -118,7 +136,7 @@ def run(base_date: str | None = None):
         hdfs_client.upload(str(local), f"{remote}/{name}")
         log.info("집계 적재: %s (%d행) -> %s/%s", name, len(df), remote, name)
 
-    log.info("집계 완료 base_date=%s | 고유공고 %d · 스택행 %d · 월별 %d · 지역 %d · 추세 %d",
+    log.info("집계 완료 base_date=%s | 고유공고 %d · 스택행 %d · 월별 %d · 지역(시군구포함) %d · 추세 %d",
              base_date, fact["uid"].nunique(), len(stacks), len(monthly), len(region), len(trends))
     return postings, stacks, monthly, region, trends
 

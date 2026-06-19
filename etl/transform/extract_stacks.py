@@ -10,6 +10,11 @@ from etl.common.logger import get_logger
 log = get_logger("stacks")
 DICT_DIR = settings.DATA_DIR / "dict"
 
+# 더 구체적인 스택에 '흡수'되어야 하는 키워드의 부정형 경계.
+#  - 'spring'이 'spring boot'의 일부일 땐 Spring으로 잡지 않는다(Spring ↔ Spring Boot 엄격 분리).
+#    단독 'Spring'/'Spring Security' 등은 그대로 Spring으로 매칭된다.
+_NEG_LOOKAHEAD = {"spring": r"(?!\s*boot)"}
+
 
 def _load_rules():
     """(표준명, 키워드, 경계 정규식) 목록."""
@@ -18,7 +23,8 @@ def _load_rules():
         for row in csv.DictReader(f):
             kw = row["keyword"].strip()
             if kw:
-                pat = re.compile(rf"(?<![A-Za-z0-9]){re.escape(kw)}(?![A-Za-z0-9])", re.I)
+                neg = _NEG_LOOKAHEAD.get(kw.lower(), "")
+                pat = re.compile(rf"(?<![A-Za-z0-9]){re.escape(kw)}(?![A-Za-z0-9]){neg}", re.I)
                 rules.append((row["stack_name"].strip(), kw, pat))
     return rules
 

@@ -1,6 +1,7 @@
 import pandas as pd
 
-from etl.aggregate.build_analytics import _fact, build_monthly, build_region, build_stack_trends
+from etl.aggregate.build_analytics import (
+    _fact, build_monthly, build_region, build_stack_trends)
 
 
 def _postings():
@@ -31,9 +32,20 @@ def test_monthly_all_rollup_counts_unique():
 
 def test_region_distribution_has_no_all_region():
     region = build_region(_fact(_postings()))
-    assert "ALL" not in set(region["region"])            # 지역 분포엔 ALL 지역 없음
-    seoul_all = region[(region.region == "서울") & (region.position == "ALL")]
-    assert int(seoul_all["posting_count"].iloc[0]) == 2
+    assert "ALL" not in set(region["region"])            # 지역 분포엔 ALL 지역 없음(시·도 실제값만)
+    seoul = region[(region.region == "서울") & (region.position == "ALL") & (region.sigungu == "ALL")]
+    assert int(seoul["posting_count"].iloc[0]) == 2      # sigungu=ALL → 시·도 합계(고유 2건)
+
+
+def test_region_sigungu_rollup_and_drilldown():
+    posts = _postings().copy()
+    posts["sigungu"] = ["강남구", "마포구", "마포구"]      # 3행(2·3번째는 동일 공고 id=2)
+    rs = build_region(_fact(posts))                       # region_jobs가 sigungu 차원 포함
+    assert "ALL" not in set(rs["region"])                # 시·도는 실제값만(ALL 없음)
+    seoul_all = rs[(rs.region == "서울") & (rs.position == "ALL") & (rs.sigungu == "ALL")]
+    assert int(seoul_all["posting_count"].iloc[0]) == 2  # sigungu=ALL → 시·도 합계(고유 2건)
+    gangnam = rs[(rs.region == "서울") & (rs.position == "ALL") & (rs.sigungu == "강남구")]
+    assert int(gangnam["posting_count"].iloc[0]) == 1    # 구 단위 드릴다운
 
 
 def test_stack_ratio_uses_unique_postings_denominator():

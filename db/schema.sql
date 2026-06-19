@@ -326,6 +326,7 @@ CREATE INDEX idx_analytics_stack_month ON ANALYTICS_STACK_TRENDS (base_month);
 COMMENT ON TABLE ANALYTICS_STACK_TRENDS IS '기술스택 추세 집계(/market/stack-trends)';
 
 -- ANALYTICS_REGION_JOBS — 지역별 공고 수(직무 필터 가능).
+--   ※ sigungu(시·군·구) 컬럼은 파일 맨 아래 "11. 마이그레이션" 블록에서 ALTER 로 추가한다.
 CREATE TABLE ANALYTICS_REGION_JOBS (
     id             NUMBER(19)   NOT NULL,
     base_month     VARCHAR2(7)  NOT NULL,
@@ -359,3 +360,38 @@ COMMENT ON TABLE ETL_RUNS IS 'ETL 실행 이력(최신 성공의 base_date 를 �
 --------------------------------------------------------------------------------
 -- 끝. 검증: SELECT table_name FROM user_tables ORDER BY 1;  (16개)
 --------------------------------------------------------------------------------
+
+--==============================================================================
+-- 11. (마이그레이션) ANALYTICS_REGION_JOBS 에 sigungu 추가 — 이미 생성된 DB 전용.
+--   위 CREATE 문은 그대로 두고, 기존 DB에서는 이 블록만 실행한다(여러 번 돌려도 안전한 멱등 블록).
+--   · sigungu='ALL' 행 = 시·도 합계(필터 미지정 시 조회), 실제 sigungu = 구 단위 드릴다운.
+--   · 기존 행은 DEFAULT 'ALL' 로 채워져 시·도 합계 의미가 그대로 유지된다.
+--   · BE 는 시·도 분포 조회 시 반드시 "AND sigungu = 'ALL'" (없으면 구 단위까지 합산돼 중복).
+--==============================================================================
+DECLARE
+  v_col NUMBER;
+  v_uq  NUMBER;
+BEGIN
+  -- 1) sigungu 컬럼 추가(없을 때만). 기존 행은 'ALL'(=시·도 합계)로 채워짐.
+  SELECT COUNT(*) INTO v_col FROM user_tab_columns
+   WHERE table_name = 'ANALYTICS_REGION_JOBS' AND column_name = 'SIGUNGU';
+  IF v_col = 0 THEN
+    EXECUTE IMMEDIATE
+      'ALTER TABLE ANALYTICS_REGION_JOBS ADD (sigungu VARCHAR2(50) DEFAULT ''ALL'' NOT NULL)';
+  END IF;
+
+  -- 2) UNIQUE 키를 (base_month, position, region) → (..., sigungu) 로 교체(아직 sigungu가 키에 없을 때만).
+  SELECT COUNT(*) INTO v_uq FROM user_cons_columns
+   WHERE constraint_name = 'UQ_ANALYTICS_REGION' AND column_name = 'SIGUNGU';
+  IF v_uq = 0 THEN
+    BEGIN
+      EXECUTE IMMEDIATE 'ALTER TABLE ANALYTICS_REGION_JOBS DROP CONSTRAINT uq_analytics_region';
+    EXCEPTION WHEN OTHERS THEN
+      IF SQLCODE != -2443 THEN RAISE; END IF;          -- ORA-02443: 제약 없음 → 무시
+    END;
+    EXECUTE IMMEDIATE 'ALTER TABLE ANALYTICS_REGION_JOBS ADD CONSTRAINT uq_analytics_region '
+                   || 'UNIQUE (base_month, position, region, sigungu)';
+  END IF;
+END;
+/
+-- 검증: DESC ANALYTICS_REGION_JOBS;  (sigungu 컬럼 + 4컬럼 UNIQUE 확인)

@@ -164,12 +164,13 @@ DA 플랜 **§4.4 권장안 채택** — 세 집계 테이블 모두 `position`�
 |---|---|---|
 | analytics_monthly_jobs | base_month, position, region, posting_count | (base_month, position, region) |
 | analytics_stack_trends | base_month, position, region, stack_name, posting_count, ratio | (base_month, position, region, stack_name) |
-| analytics_region_jobs | base_month, position, region, posting_count | (base_month, position, region) |
+| analytics_region_jobs | base_month, position, region, **sigungu**, posting_count | (base_month, position, region, sigungu) |
 
 - `base_month` = `'YYYY-MM'`. `ratio`(%)는 분모 0이면 **NULL**(요구사항 §7.5·DA §4.3 "데이터 부족").
-- **`'ALL'` 센티넬:** "전체"(직무·지역 무관) 집계행은 `position`/`region`을 `NULL`이 아니라 `'ALL'`로 넣는다. → Oracle은 복합 UNIQUE에서 NULL을 서로 다른 값으로 취급해 중복 차단이 안 되기 때문. BE는 필터 미지정 시 `= 'ALL'` 행을 조회한다.
+- **`analytics_region_jobs`의 `sigungu`(지역 드릴다운):** 별도 테이블 대신 `region_jobs`에 `sigungu` 컬럼을 추가. `sigungu='ALL'` 행 = 시·도 합계(필터 미지정 시 조회), 실제 `sigungu` = 구 단위. `region`(시·도)은 실제값만(ALL 없음). 단일 테이블이 SSOT이며 중복 저장이 없다.
+- **`'ALL'` 센티넬:** "전체"(직무·지역·시군구 무관) 집계행은 `position`/`region`/`sigungu`를 `NULL`이 아니라 `'ALL'`로 넣는다. → Oracle은 복합 UNIQUE에서 NULL을 서로 다른 값으로 취급해 중복 차단이 안 되기 때문. BE는 필터 미지정 시 `= 'ALL'` 행을 조회한다. **시·도 분포 조회 시 반드시 `AND sigungu='ALL'`** (없으면 구 단위 행까지 합산돼 중복).
 
-> ⚠️ **엔티티 보강 필요(1일차 합의 항목).** 현재 `백엔드 설명.md`의 `AnalyticsStackTrend`에는 `region`이, `AnalyticsRegionJob`에는 `position`이 빠져 있다. API 필터(`stack-trends?region=`, `region-distribution?position=`)를 충족하려면 두 엔티티에 해당 필드를 추가하고, `position`/`region`을 `nullable=false`(기본 `'ALL'`)로 맞춰야 한다. 본 DDL이 그 최종형이다.
+> ⚠️ **엔티티 보강 필요(1일차 합의 항목).** 현재 `백엔드 설명.md`의 `AnalyticsStackTrend`에는 `region`이, `AnalyticsRegionJob`에는 `position`·`sigungu`가 빠져 있다. API 필터(`stack-trends?region=`, `region-distribution?position=`)와 구 단위 드릴다운을 충족하려면 두 엔티티에 해당 필드를 추가하고, `position`/`region`/`sigungu`를 `nullable=false`(기본 `'ALL'`)로 맞춰야 한다. 본 DDL이 그 최종형이다.
 
 ### 5.3 `etl_runs` — 실행 이력(ETL-07·10)
 `source`, `started_at`(NN), `ended_at`, `status`(`RUNNING`/`SUCCESS`/`FAILED`), `extracted_count`, `loaded_count`, `base_date`, `error_message`. 인덱스 `(status, started_at DESC)`. → BE는 **최신 SUCCESS의 `base_date`**를 대시보드 `dataBaseDate`로 노출(ETL-10).
