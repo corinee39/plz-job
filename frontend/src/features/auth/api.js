@@ -5,6 +5,11 @@ export async function getOAuthUrl(provider) {
   return apiClient.get(`/auth/oauth2/${provider}`);
 }
 
+// AUTH-02: provider가 프론트로 돌려준 code를 백엔드 콜백에 넘겨 인증 쿠키를 발급받는다
+export async function exchangeOAuthCode(provider, code) {
+  return apiClient.get(`/auth/oauth2/${provider}/callback`, { params: { code } });
+}
+
 export async function getCurrentUser() {
   return apiClient.get("/users/me");
 }
