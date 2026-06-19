@@ -6,6 +6,7 @@ import LoginPage from "../pages/LoginPage";
 import OAuthCallbackPage from "../pages/OAuthCallbackPage";
 import DashboardPage from "../pages/DashboardPage";
 import JobPostingListPage from "../pages/JobPostingListPage";
+import JobBoardPage from "../pages/JobBoardPage";
 import JobPostingFormPage from "../pages/JobPostingFormPage";
 import JobPostingDetailPage from "../pages/JobPostingDetailPage";
 import DocumentsPage from "../pages/DocumentsPage";
@@ -26,6 +27,7 @@ export function AppRouter() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/job-postings" element={<JobPostingListPage />} />
+          <Route path="/board" element={<JobBoardPage />} />
           <Route path="/job-postings/new" element={<JobPostingFormPage />} />
           <Route path="/job-postings/:id" element={<JobPostingDetailPage />} />
           <Route path="/job-postings/:id/interview-ai" element={<InterviewAiPage />} />

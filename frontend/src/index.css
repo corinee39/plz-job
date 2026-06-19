@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* 차트/브랜드 색 토큰 — "내 데이터=brand(indigo), 시장=market(zinc)" 의미 규칙의 단일 출처.
+   차트 컴포넌트는 색을 하드코딩하지 말고 var(--color-brand) / var(--color-market)을 쓴다. */
+@theme {
+  --color-brand: #6366f1;
+  --color-brand-soft: #818cf8;
+  --color-market: #a1a1aa;
+}
+
 :root {
   color-scheme: light dark;
 }
