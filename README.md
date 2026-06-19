@@ -28,6 +28,10 @@ docker compose ps          # oracle 이 (healthy) 될 때까지 대기
 # 2) 백엔드 실행
 cd backend
 ./gradlew bootRun
+
+# 3) 프론트엔드 실행
+cd frontend
+npm run dev
 ```
 - Oracle: `jdbc:oracle:thin:@localhost:1522/XEPDB1` (Service=XEPDB1, 계정 `plzjob` / `.env`의 `DB_PASSWORD`)
 - Ollama: `http://localhost:11435`
