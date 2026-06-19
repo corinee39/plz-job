@@ -6,6 +6,7 @@ import { StageBadge } from "../components/common/StageBadge";
 import { EmptyState } from "../components/common/EmptyState";
 import { ErrorState } from "../components/common/ErrorState";
 import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
+import { DdayBadge } from "../components/common/DdayBadge";
 import { getJobPostings } from "../features/jobPostings/api";
 import { STAGE_CODES } from "../constants/stageCodes";
 
@@ -52,12 +53,20 @@ export default function JobPostingListPage() {
             className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm bg-transparent w-40"
           />
         </div>
-        <Link
-          to="/job-postings/new"
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900 text-center"
-        >
-          + 공고 등록
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            to="/board"
+            className="rounded-md border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm text-center hover:bg-zinc-50 dark:hover:bg-zinc-800"
+          >
+            보드 보기
+          </Link>
+          <Link
+            to="/job-postings/new"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900 text-center"
+          >
+            + 공고 등록
+          </Link>
+        </div>
       </div>
 
       {isLoading ? (
@@ -101,7 +110,16 @@ export default function JobPostingListPage() {
                     </td>
                     <td className="px-4 py-3 text-zinc-500 hidden sm:table-cell">{j.position ?? "-"}</td>
                     <td className="px-4 py-3 text-zinc-500 hidden md:table-cell">{j.region ?? "-"}</td>
-                    <td className="px-4 py-3 text-zinc-500 hidden md:table-cell">{j.deadline ?? "-"}</td>
+                    <td className="px-4 py-3 text-zinc-500 hidden md:table-cell">
+                      {j.deadline ? (
+                        <span className="flex items-center gap-1.5">
+                          {j.deadline}
+                          <DdayBadge deadline={j.deadline} />
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <StageBadge code={j.stage ?? j.currentStage} />
                     </td>

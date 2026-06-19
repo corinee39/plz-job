@@ -1,12 +1,18 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer,
+  FunnelChart, Funnel, LabelList, Cell,
+  LineChart, Line,
 } from "recharts";
+import { Link } from "react-router-dom";
 import { PageShell } from "../components/layout/PageShell";
 import { AsyncBoundary } from "../components/common/AsyncBoundary";
 import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
 import { EmptyState } from "../components/common/EmptyState";
 import { AiDisclaimerBadge } from "../components/common/AiDisclaimerBadge";
+import { DdayBadge } from "../components/common/DdayBadge";
+import { useJobPostings } from "../features/jobPostings/hooks";
+import { daysUntil, isActiveStage } from "../lib/jobMetrics";
 import { useFilterStore } from "../store/filterStore";
 import {
   useDashboardSummary,
@@ -55,6 +61,12 @@ const FUNNEL_LABELS = {
   FINAL: "최종",
 };
 
+// 차트 색 — index.css @theme 토큰을 단일 출처로 참조("내 데이터=brand, 시장=market")
+const BRAND = "var(--color-brand)";
+const MARKET = "var(--color-market)";
+// 퍼널 단계별 brand 농도 그라데이션(위→아래로 옅어짐)
+const FUNNEL_COLORS = ["#4f46e5", "#6366f1", "#818cf8", "#a5b4fc", "#c7d2fe"];
+
 // UI-02: 대시보드 — DASH-01~09, AI-05
 export default function DashboardPage() {
   const { period, job, region, setPeriod, setJob, setRegion } = useFilterStore();
@@ -71,9 +83,10 @@ export default function DashboardPage() {
     ...m,
     name: m.month.replace(/^\d{4}-0?/, "") + "월",
   }));
-  const stageData = (stages.data?.stages ?? []).map((s) => ({
+  const stageData = (stages.data?.stages ?? []).map((s, i) => ({
     ...s,
     name: FUNNEL_LABELS[s.stage] ?? s.stage,
+    fill: FUNNEL_COLORS[i % FUNNEL_COLORS.length],
   }));
   const stackTrendsData = (stackTrends.data?.trends ?? []).slice(0, 6);
   const comparisonData = (comparison.data?.comparison ?? []).slice(0, 6);
@@ -116,10 +129,16 @@ export default function DashboardPage() {
         loadingFallback={<KpiSkeletons />}
       >
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <KpiCard label="이번 달 지원 수" value={summary.data?.thisMonthApplications ?? 0} unit="건" />
-          <KpiCard label="진행 중 공고 수" value={summary.data?.inProgressCount ?? 0} unit="건" />
-          <KpiCard label="예정된 전형 수" value={summary.data?.upcomingSchedules ?? 0} unit="건" />
-          <KpiCard label="최종 합격 수" value={summary.data?.finalPassCount ?? 0} unit="건" />
+          <KpiCard
+            label="이번 달 지원 수"
+            value={summary.data?.thisMonthApplications ?? 0}
+            unit="건"
+            delta={summary.data?.applicationsDelta}
+            spark={monthlyData}
+          />
+          <KpiCard label="진행 중 공고 수" value={summary.data?.inProgressCount ?? 0} unit="건" delta={summary.data?.inProgressDelta} />
+          <KpiCard label="예정된 전형 수" value={summary.data?.upcomingSchedules ?? 0} unit="건" delta={summary.data?.upcomingDelta} />
+          <KpiCard label="최종 합격 수" value={summary.data?.finalPassCount ?? 0} unit="건" delta={summary.data?.finalPassDelta} />
         </div>
         {summary.data?.dataBaseDate && (
           <p className="text-xs text-zinc-400 -mt-2">
@@ -127,6 +146,9 @@ export default function DashboardPage() {
           </p>
         )}
       </AsyncBoundary>
+
+      {/* 마감 임박 공고 (JOB-08) — 진행 중 공고를 마감일 순으로 */}
+      <DeadlineWidget />
 
       {/* 차트 2×2 그리드 */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -139,7 +161,12 @@ export default function DashboardPage() {
           onRetry={monthly.refetch}
         >
           {monthlyData.length === 0 ? (
-            <EmptyState title="지원 기록이 없습니다" />
+            <EmptyState
+              title="지원 기록이 없습니다"
+              description="첫 공고를 등록하면 지원 추이가 여기에 쌓입니다."
+              actionLabel="+ 공고 등록"
+              actionTo="/job-postings/new"
+            />
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={monthlyData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -147,7 +174,7 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip formatter={(v) => [`${v}건`, "지원 수"]} />
-                <Bar dataKey="applied" fill="#6366f1" radius={[3, 3, 0, 0]} name="지원 수" />
+                <Bar dataKey="applied" fill={BRAND} radius={[3, 3, 0, 0]} name="지원 수" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -162,23 +189,31 @@ export default function DashboardPage() {
           onRetry={stages.refetch}
         >
           {stageData.length === 0 ? (
-            <EmptyState title="지원 기록이 없습니다" />
+            <EmptyState
+              title="지원 기록이 없습니다"
+              description="지원 단계를 기록하면 어디서 이탈하는지 한눈에 보입니다."
+              actionLabel="+ 공고 등록"
+              actionTo="/job-postings/new"
+            />
           ) : (
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={stageData} layout="vertical" margin={{ top: 4, right: 48, left: 32, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={60} />
+              <FunnelChart margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
                 <Tooltip
                   formatter={(v, _name, props) => {
                     const { passRate } = props.payload;
                     return passRate != null
-                      ? [`${v}건 (통과율 ${passRate}%)`, "건수"]
-                      : [`${v}건`, "건수"];
+                      ? [`${v}건 (통과율 ${passRate}%)`, props.payload.name]
+                      : [`${v}건`, props.payload.name];
                   }}
                 />
-                <Bar dataKey="count" fill="#6366f1" radius={[0, 3, 3, 0]} name="건수" />
-              </BarChart>
+                <Funnel dataKey="count" data={stageData} isAnimationActive>
+                  <LabelList position="right" dataKey="name" fontSize={11} fill="#71717a" />
+                  <LabelList position="inside" dataKey="count" fontSize={11} fill="#fff" />
+                  {stageData.map((s) => (
+                    <Cell key={s.stage} fill={s.fill} />
+                  ))}
+                </Funnel>
+              </FunnelChart>
             </ResponsiveContainer>
           )}
           {stages.data?.note && (
@@ -208,7 +243,7 @@ export default function DashboardPage() {
                     "시장 비율",
                   ]}
                 />
-                <Bar dataKey="ratio" fill="#a1a1aa" radius={[0, 3, 3, 0]} name="시장 비율" />
+                <Bar dataKey="ratio" fill={MARKET} radius={[0, 3, 3, 0]} name="시장 비율" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -235,8 +270,8 @@ export default function DashboardPage() {
                 <YAxis tick={{ fontSize: 11 }} unit="%" />
                 <Tooltip formatter={(v) => [`${v}%`]} />
                 <Legend />
-                <Bar dataKey="userRatio" fill="#6366f1" name="내 지원" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="marketRatio" fill="#a1a1aa" name="시장" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="userRatio" fill={BRAND} name="내 지원" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="marketRatio" fill={MARKET} name="시장" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -262,7 +297,7 @@ export default function DashboardPage() {
                 <XAxis type="number" tick={{ fontSize: 11 }} />
                 <YAxis type="category" dataKey="region" tick={{ fontSize: 11 }} width={36} />
                 <Tooltip formatter={(v) => [`${v.toLocaleString()}건`, "공고 수"]} />
-                <Bar dataKey="postingCount" fill="#a1a1aa" radius={[0, 3, 3, 0]} name="공고 수" />
+                <Bar dataKey="postingCount" fill={MARKET} radius={[0, 3, 3, 0]} name="공고 수" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -320,6 +355,60 @@ export default function DashboardPage() {
 
 // ── 헬퍼 컴포넌트 ──────────────────────────────────────────────────
 
+// 진행 중(종료 단계 제외) 공고를 마감 임박 순으로 보여준다. 마감 지난 건은 제외.
+function DeadlineWidget() {
+  const { data, isLoading, isError, refetch } = useJobPostings({ page: 0, size: 100 });
+
+  const upcoming = (data?.content ?? [])
+    .filter((j) => j.deadline && isActiveStage(j.currentStage ?? j.stage))
+    .map((j) => ({ ...j, days: daysUntil(j.deadline) }))
+    .filter((j) => j.days != null && j.days >= 0)
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 5);
+
+  return (
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">마감 임박 공고</p>
+        <Link to="/board" className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+          보드에서 관리 →
+        </Link>
+      </div>
+      <AsyncBoundary
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        loadingFallback={<LoadingSkeleton className="h-20 w-full" />}
+      >
+        {upcoming.length === 0 ? (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            마감이 임박한 진행 중 공고가 없습니다.
+          </p>
+        ) : (
+          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            {upcoming.map((j) => (
+              <li key={j.jobPostingId} className="flex items-center justify-between gap-2 py-2">
+                <Link
+                  to={`/job-postings/${j.jobPostingId}`}
+                  className="min-w-0 flex-1 truncate text-sm hover:underline"
+                >
+                  <span className="text-zinc-500">{j.companyName}</span>
+                  <span className="mx-1 text-zinc-300">·</span>
+                  {j.title}
+                </Link>
+                <span className="flex shrink-0 items-center gap-2">
+                  <span className="text-xs text-zinc-400">{j.deadline}</span>
+                  <DdayBadge deadline={j.deadline} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </AsyncBoundary>
+    </div>
+  );
+}
+
 function Select({ value, onChange, options }) {
   return (
     <select
@@ -334,15 +423,42 @@ function Select({ value, onChange, options }) {
   );
 }
 
-function KpiCard({ label, value, unit }) {
+function KpiCard({ label, value, unit, delta, spark }) {
   return (
     <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-1">
       <p className="text-xs text-zinc-500 dark:text-zinc-400">{label}</p>
-      <p className="text-2xl font-bold">
-        {value}
-        <span className="ml-1 text-sm font-normal text-zinc-500">{unit}</span>
-      </p>
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-2xl font-bold">
+          {value}
+          <span className="ml-1 text-sm font-normal text-zinc-500">{unit}</span>
+        </p>
+        {spark?.length > 1 && (
+          <div className="h-8 w-16 shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={spark} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+                <Line type="monotone" dataKey="applied" stroke={BRAND} strokeWidth={1.5} dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+      <DeltaBadge delta={delta} />
     </div>
+  );
+}
+
+// 지난달 대비 증감 배지 — 양수=증가(emerald), 음수=감소(red), 0=유지(zinc)
+function DeltaBadge({ delta }) {
+  if (delta == null) return null;
+  const tone =
+    delta > 0 ? "text-emerald-600 dark:text-emerald-400"
+    : delta < 0 ? "text-red-500"
+    : "text-zinc-400";
+  const arrow = delta > 0 ? "▲" : delta < 0 ? "▼" : "–";
+  return (
+    <p className={`text-xs ${tone}`}>
+      {arrow} {delta === 0 ? "변동 없음" : `${Math.abs(delta)}건 지난달 대비`}
+    </p>
   );
 }
 

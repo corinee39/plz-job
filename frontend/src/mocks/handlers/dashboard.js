@@ -9,6 +9,11 @@ export const dashboardHandlers = [
       inProgressCount: 6,
       upcomingSchedules: 3,
       finalPassCount: 1,
+      // 지난달 대비 증감 — KPI 카드 추세 표시용(양수=증가)
+      applicationsDelta: -2,
+      inProgressDelta: 1,
+      upcomingDelta: 0,
+      finalPassDelta: 1,
       overallPassRate: 12.5,
       sampleSize: 30,
       dataBaseDate: "2026-06-16",

@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { PageShell } from "../components/layout/PageShell";
 import { AiDisclaimerBadge } from "../components/common/AiDisclaimerBadge";
 import { ErrorState } from "../components/common/ErrorState";
 import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
 import { getDocuments, getDocument } from "../features/documents/api";
+import { getJobPosting } from "../features/jobPostings/api";
 import { generateInterviewQuestions, getGenerations } from "../features/ai/api";
+import { useRetrospectives } from "../features/retrospectives/hooks";
+import { useCurrentUser } from "../features/auth/hooks";
+import { stackMatch } from "../lib/jobMetrics";
+import { RETRO_TYPE_LABELS, DIFFICULTY_LABELS } from "../constants/stageCodes";
 
 const CATEGORY_LABELS = {
   TECHNICAL: "기술",
@@ -31,11 +36,21 @@ export default function InterviewAiPage() {
   const [docId, setDocId] = useState("");
   const [versionId, setVersionId] = useState("");
   const [result, setResult] = useState(null);
+  const [useRetro, setUseRetro] = useState(true); // 지난 회고 반영 여부
 
   const docs = useQuery({
     queryKey: ["documents"],
     queryFn: getDocuments,
   });
+
+  const job = useQuery({
+    queryKey: ["jobPosting", jobPostingId],
+    queryFn: () => getJobPosting(jobPostingId),
+    enabled: !!jobPostingId,
+  });
+
+  const retros = useRetrospectives(applicationId);
+  const { data: user } = useCurrentUser();
 
   const docDetail = useQuery({
     queryKey: ["document", docId],
@@ -53,6 +68,7 @@ export default function InterviewAiPage() {
       generateInterviewQuestions(applicationId, {
         documentVersionId: Number(versionId),
         regenerate,
+        includeRetrospectives: useRetro && (retros.data ?? []).length > 0,
       }),
     onSuccess: (data) => {
       setResult(data);
@@ -145,6 +161,16 @@ export default function InterviewAiPage() {
         )}
       </div>
 
+      {/* 준비 포인트 — 공고 키워드 체크 + 지난 회고 반영 */}
+      <PrepPointsCard
+        jobStacks={job.data?.techStacks ?? []}
+        userStacks={user?.techStacks ?? []}
+        retros={retros.data ?? []}
+        retrosLoading={retros.isLoading}
+        useRetro={useRetro}
+        setUseRetro={setUseRetro}
+      />
+
       {/* 오류 메시지 */}
       {generate.isError && (
         <ErrorState
@@ -175,6 +201,86 @@ export default function InterviewAiPage() {
         <GenerationHistory generations={generations.data ?? []} isLoading={generations.isLoading} />
       )}
     </PageShell>
+  );
+}
+
+// 준비 포인트: ① 공고 핵심 키워드(자소서 포함 여부 자가 점검, §13.5 갭)
+//             ② 지난 회고(약점) 반영 토글 (회고 → AI 면접질문 연결)
+function PrepPointsCard({ jobStacks, userStacks, retros, retrosLoading, useRetro, setUseRetro }) {
+  const { matched, missing } = stackMatch(userStacks, jobStacks);
+  const hasContent = jobStacks.length > 0 || retros.length > 0 || retrosLoading;
+  if (!hasContent) return null;
+
+  return (
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-4">
+      <h2 className="text-sm font-semibold">준비 포인트</h2>
+
+      {/* 공고 핵심 키워드 — 자소서/이력서에 녹였는지 점검 */}
+      {jobStacks.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-zinc-500">
+            이 공고가 요구하는 키워드 — 선택한 서류에 포함되어 있는지 확인하세요.
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {jobStacks.map((s) => {
+              const owned = matched.includes(s);
+              return (
+                <span
+                  key={s}
+                  className={`rounded-full px-2 py-0.5 text-xs ${
+                    owned
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                  }`}
+                >
+                  {owned ? "✓ " : "+ "}
+                  {s}
+                </span>
+              );
+            })}
+          </div>
+          {missing.length > 0 && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              프로필에 없는 키워드({missing.join(", ")})는 서류·답변에서 특히 보강해 보세요.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 지난 회고 반영 */}
+      <div className="space-y-2 border-t border-zinc-100 dark:border-zinc-800 pt-3">
+        {retrosLoading ? (
+          <p className="text-xs text-zinc-500">회고를 불러오는 중…</p>
+        ) : retros.length === 0 ? (
+          <p className="text-xs text-zinc-500">
+            이 공고에 작성한 회고가 없습니다. 회고를 남기면 AI 질문에 약점 보강을 반영할 수 있습니다.
+          </p>
+        ) : (
+          <>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={useRetro}
+                onChange={(e) => setUseRetro(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600"
+              />
+              지난 회고({retros.length}건)를 반영해 약점 보강 질문 생성
+            </label>
+            <ul className="space-y-1.5 pl-1">
+              {retros.map((r) => (
+                <li key={r.retrospectiveId} className="text-xs text-zinc-500">
+                  <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                    [{RETRO_TYPE_LABELS[r.type] ?? r.type}
+                    {r.difficulty ? ` · ${DIFFICULTY_LABELS[r.difficulty] ?? r.difficulty}` : ""}]
+                  </span>{" "}
+                  {r.improvement || r.content}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
