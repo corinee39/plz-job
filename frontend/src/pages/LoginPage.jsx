@@ -30,7 +30,7 @@ export default function LoginPage() {
     setLoadingProvider(provider);
     try {
       const { authorizationUrl } = await getOAuthUrl(provider);
-      window.location.href = authorizationUrl;
+      window.location.assign(authorizationUrl);
     } catch (e) {
       // 백엔드 5xx 등으로 인가 URL 발급이 실패하면 버튼이 "죽은 듯" 보이지 않게 알린다.
       console.error("OAuth 로그인 시작 실패:", e);
