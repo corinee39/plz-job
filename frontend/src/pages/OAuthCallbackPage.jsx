@@ -1,11 +1,13 @@
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { exchangeOAuthCode } from "../features/auth/api.js";
 
-// AUTH-02: Spring Security OAuth 인증 완료 후 리다이렉트되는 페이지.
-// 서버가 Set-Cookie로 인증 쿠키를 심어둔 상태이므로 currentUser 캐시를 무효화 후 대시보드로 이동한다.
+// AUTH-02: 카카오/구글이 code를 들고 이 페이지로 리다이렉트한다.
+// code를 백엔드 /auth/oauth2/{provider}/callback 에 전달해 쿠키를 발급받고 대시보드로 이동.
 export default function OAuthCallbackPage() {
   const [params] = useSearchParams();
+  const { provider } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -15,11 +17,22 @@ export default function OAuthCallbackPage() {
       navigate(`/login?error=${encodeURIComponent(error)}`, { replace: true });
       return;
     }
-    // 쿼리 캐시를 무효화해서 ProtectedRoute의 useCurrentUser가 다시 조회하도록 한다.
-    // (OAuth 콜백 후 쿠키가 새로 설정되었으므로)
-    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-    navigate("/dashboard", { replace: true });
-  }, [navigate, params, queryClient]);
+
+    const code = params.get("code");
+    if (!code || !provider) {
+      navigate("/login?error=invalid_callback", { replace: true });
+      return;
+    }
+
+    exchangeOAuthCode(provider, code)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+        navigate("/dashboard", { replace: true });
+      })
+      .catch(() => {
+        navigate("/login?error=auth_failed", { replace: true });
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">

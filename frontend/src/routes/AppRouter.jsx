@@ -19,7 +19,7 @@ export function AppRouter() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+      <Route path="/auth/callback/:provider" element={<OAuthCallbackPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
