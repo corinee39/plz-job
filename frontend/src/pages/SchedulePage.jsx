@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay } from "date-fns";
+import { format, parse, startOfWeek, getDay, isSameMonth } from "date-fns";
 import { ko } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { PageShell } from "../components/layout/PageShell";
@@ -16,6 +16,70 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales: { ko },
 });
+
+const VIEW_LABELS = { month: "월", week: "주", agenda: "목록" };
+
+// UI-03 — 커스텀 캘린더 툴바
+function CalendarToolbar({ date, view, views, onNavigate, onView }) {
+  const isToday = isSameMonth(date, new Date()) && date.getFullYear() === new Date().getFullYear();
+  const label = format(date, view === "month" ? "yyyy년 M월" : view === "week" ? "yyyy년 M월" : "yyyy년 M월", { locale: ko });
+
+  return (
+    <div className="mb-3 grid grid-cols-3 items-center gap-2">
+      {/* 빈 왼쪽 칸 (균형용) */}
+      <div />
+      {/* 월 내비게이션 — 중앙 */}
+      <div className="flex items-center justify-center gap-2">
+        <button
+          onClick={() => onNavigate("PREV")}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          aria-label="이전"
+        >
+          ◀
+        </button>
+        <span className="min-w-[110px] text-center text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+          {label}
+        </span>
+        <button
+          onClick={() => onNavigate("NEXT")}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          aria-label="다음"
+        >
+          ▶
+        </button>
+      </div>
+
+      {/* 오늘 버튼 + 뷰 전환 — 오른쪽 정렬 */}
+      <div className="flex items-center justify-end gap-1.5">
+        <button
+          onClick={() => onNavigate("TODAY")}
+          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            isToday
+              ? "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400 cursor-default"
+              : "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          }`}
+        >
+          오늘
+        </button>
+        <div className="ml-1 flex rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+          {views.map((v) => (
+            <button
+              key={v}
+              onClick={() => onView(v)}
+              className={`px-2.5 py-1 text-xs transition-colors ${
+                view === v
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              }`}
+            >
+              {VIEW_LABELS[v] ?? v}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // 상세 패널 뱃지 색
 const TYPE_COLORS = {
@@ -71,6 +135,8 @@ export default function SchedulePage() {
   const [selected, setSelected] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [isEditing, setIsEditing] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentView, setCurrentView] = useState(Views.MONTH);
 
   const { data = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["schedules"],
@@ -137,25 +203,24 @@ export default function SchedulePage() {
             startAccessor="start"
             endAccessor="end"
             culture="ko"
-            defaultView={Views.MONTH}
+            formats={{ agendaDateFormat: (date) => format(date, "M월 d일 (eee)", { locale: ko }) }}
+            date={currentDate}
+            view={currentView}
+            onNavigate={setCurrentDate}
+            onView={setCurrentView}
             views={[Views.MONTH, Views.WEEK, Views.AGENDA]}
             messages={{
               allDay: "종일",
-              previous: "이전",
-              next: "다음",
-              today: "오늘",
-              month: "월",
-              week: "주",
-              day: "일",
-              agenda: "목록",
               date: "날짜",
               time: "시간",
               event: "일정",
               noEventsInRange: "이 기간에 일정이 없습니다.",
               showMore: (count) => `+${count}개 더`,
             }}
-            components={{ event: EventCell }}
+            components={{ event: EventCell, toolbar: CalendarToolbar }}
             eventPropGetter={eventStyleGetter}
+            step={60}
+            timeslots={1}
             onSelectEvent={handleSelectEvent}
             style={{ height: "100%" }}
           />
