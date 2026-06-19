@@ -1,29 +1,37 @@
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { getOAuthUrl } from "../features/auth/api.js";
 
 // AUTH-01: 카카오·구글 소셜 로그인 (§12.1 OAuth 리다이렉트 방식)
 const OAUTH_PROVIDERS = [
   {
     key: "kakao",
     label: "카카오로 로그인",
-    className: "bg-[#FEE500] text-[#191919] hover:bg-[#FDD835]",
+    className: "bg-[#FEE500] text-[#191919] hover:bg-[#FDD835] disabled:opacity-60",
   },
   {
     key: "google",
     label: "Google로 로그인",
     className:
-      "border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800",
+      "border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60",
   },
 ];
 
-function redirectToOAuth(provider) {
-  window.location.href = `${import.meta.env.VITE_API_BASE_URL ?? "/api"}/auth/oauth2/${provider}`;
-}
-
 export default function LoginPage() {
   const [params] = useSearchParams();
-  const navigate = useNavigate();
+  const [loadingProvider, setLoadingProvider] = useState(null);
   const error = params.get("error");
-  const isDev = import.meta.env.VITE_API_MOCKING === "enabled";
+
+  // AUTH-01: 백엔드에서 authorizationUrl(JSON)을 받아 이동 (302 직접 이동 방식 아님)
+  async function handleLogin(provider) {
+    setLoadingProvider(provider);
+    try {
+      const { authorizationUrl } = await getOAuthUrl(provider);
+      window.location.href = authorizationUrl;
+    } catch {
+      setLoadingProvider(null);
+    }
+  }
 
   return (
     <div className="flex flex-1 items-center justify-center p-4">
@@ -47,21 +55,14 @@ export default function LoginPage() {
           {OAUTH_PROVIDERS.map((p) => (
             <button
               key={p.key}
-              onClick={() => redirectToOAuth(p.key)}
+              onClick={() => handleLogin(p.key)}
+              disabled={loadingProvider !== null}
               className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${p.className}`}
             >
-              {p.label}
+              {loadingProvider === p.key ? "연결 중..." : p.label}
             </button>
           ))}
 
-          {isDev && (
-            <button
-              onClick={() => navigate("/auth/callback")}
-              className="w-full rounded-lg bg-blue-100 dark:bg-blue-950 px-4 py-2.5 text-sm font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors border border-blue-200 dark:border-blue-800"
-            >
-              🧪 개발용 로그인 (MSW)
-            </button>
-          )}
         </div>
       </div>
     </div>

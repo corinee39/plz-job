@@ -1,5 +1,10 @@
 import { apiClient } from "../../lib/api/client";
 
+// AUTH-01: provider 인가 URL 발급 (백엔드가 JSON으로 반환)
+export async function getOAuthUrl(provider) {
+  return apiClient.get(`/auth/oauth2/${provider}`);
+}
+
 export async function getCurrentUser() {
   return apiClient.get("/users/me");
 }
