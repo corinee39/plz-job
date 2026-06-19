@@ -31,6 +31,7 @@ function formatDateTime(iso) {
   });
 }
 
+// PROC-02·05 — 일정 목록 (§4.4)
 export default function SchedulePage() {
   const qc = useQueryClient();
   const [showAll, setShowAll] = useState(false);
@@ -57,8 +58,11 @@ export default function SchedulePage() {
     onError: (err) => alert(err?.message ?? "삭제에 실패했습니다."),
   });
 
+  // status 필드(PROC-05)로 필터링 — 없으면 startAt으로 fallback
   const now = new Date().toISOString();
-  const visible = showAll ? data : data.filter((s) => s.scheduledAt >= now);
+  const visible = showAll
+    ? data
+    : data.filter((s) => (s.status ? s.status === "UPCOMING" : s.startAt >= now));
 
   return (
     <PageShell title="일정" description="전형 관련 일정을 한눈에 확인합니다.">
@@ -82,7 +86,7 @@ export default function SchedulePage() {
         ) : (
           <ul className="space-y-3">
             {visible.map((s) => {
-              const isPast = s.scheduledAt < now;
+              const isPast = s.status === "PAST" || s.startAt < now;
               return (
                 <li
                   key={s.scheduleId}
@@ -108,16 +112,12 @@ export default function SchedulePage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <ScheduleTypeBadge type={s.scheduleType} />
                           <span className="text-sm font-medium">{s.companyName}</span>
-                          <span className="text-sm text-zinc-500">{s.jobTitle}</span>
                         </div>
                         <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                          {formatDateTime(s.scheduledAt)}
+                          {formatDateTime(s.startAt)}
                         </p>
-                        {s.location && (
-                          <p className="text-xs text-zinc-500">📍 {s.location}</p>
-                        )}
-                        {s.notes && (
-                          <p className="text-xs text-zinc-400">{s.notes}</p>
+                        {s.memo && (
+                          <p className="text-xs text-zinc-400">{s.memo}</p>
                         )}
                       </div>
                       <div className="flex shrink-0 gap-2 mt-0.5">
@@ -126,9 +126,8 @@ export default function SchedulePage() {
                             setEditId(s.scheduleId);
                             setEditForm({
                               scheduleType: s.scheduleType,
-                              scheduledAt: s.scheduledAt.slice(0, 16),
-                              location: s.location ?? "",
-                              notes: s.notes ?? "",
+                              startAt: s.startAt.slice(0, 16),
+                              memo: s.memo ?? "",
                             });
                           }}
                           className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -158,6 +157,7 @@ export default function SchedulePage() {
   );
 }
 
+// PROC-01 — 일정 수정 폼 (§4.4: startAt, memo)
 function EditScheduleRow({ form, setForm, onSave, onCancel, isPending }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const inputCls =
@@ -172,21 +172,15 @@ function EditScheduleRow({ form, setForm, onSave, onCancel, isPending }) {
         </select>
         <input
           type="datetime-local"
-          value={form.scheduledAt}
-          onChange={set("scheduledAt")}
+          value={form.startAt}
+          onChange={set("startAt")}
           className={inputCls}
         />
       </div>
       <input
-        placeholder="장소"
-        value={form.location}
-        onChange={set("location")}
-        className={`w-full ${inputCls}`}
-      />
-      <input
         placeholder="메모"
-        value={form.notes}
-        onChange={set("notes")}
+        value={form.memo}
+        onChange={set("memo")}
         className={`w-full ${inputCls}`}
       />
       <div className="flex gap-2">

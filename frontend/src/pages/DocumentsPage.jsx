@@ -330,7 +330,7 @@ function CreateDocForm({ onCreate, pending }) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="백엔드 이력서"
           required
-          className={`flex-1 ${inputCls}`}
+          className={`flex-1 min-w-0 ${inputCls}`}
         />
       </div>
       <button
