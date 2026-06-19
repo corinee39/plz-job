@@ -12,6 +12,7 @@ import {
   useDashboardSummary,
   useMonthlyApplications,
   useStageConversions,
+  useStackTrends,
   useUserComparison,
   useRegionDistribution,
   useDashboardReport,
@@ -61,6 +62,7 @@ export default function DashboardPage() {
   const summary = useDashboardSummary();
   const monthly = useMonthlyApplications();
   const stages = useStageConversions();
+  const stackTrends = useStackTrends();
   const comparison = useUserComparison();
   const regionDist = useRegionDistribution();
   const reportMutation = useDashboardReport();
@@ -73,6 +75,7 @@ export default function DashboardPage() {
     ...s,
     name: FUNNEL_LABELS[s.stage] ?? s.stage,
   }));
+  const stackTrendsData = (stackTrends.data?.trends ?? []).slice(0, 6);
   const comparisonData = (comparison.data?.comparison ?? []).slice(0, 6);
   const regionData = (regionDist.data?.regions ?? []).slice(0, 5);
 
@@ -183,10 +186,41 @@ export default function DashboardPage() {
           )}
         </ChartCard>
 
-        {/* DASH-04·06: 기술 스택 비교 */}
+        {/* DASH-04: 시장 기술 스택 추세 */}
+        <ChartCard
+          title="시장 기술 스택 추세"
+          badge="DASH-04"
+          isLoading={stackTrends.isLoading}
+          isError={stackTrends.isError}
+          onRetry={stackTrends.refetch}
+        >
+          {stackTrendsData.length === 0 ? (
+            <EmptyState title="시장 데이터가 없습니다" />
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={stackTrendsData} layout="vertical" margin={{ top: 4, right: 48, left: 8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11 }} unit="%" />
+                <YAxis type="category" dataKey="stack" tick={{ fontSize: 11 }} width={72} />
+                <Tooltip
+                  formatter={(v, _name, props) => [
+                    `${v}% (${props.payload.postingCount?.toLocaleString()}건)`,
+                    "시장 비율",
+                  ]}
+                />
+                <Bar dataKey="ratio" fill="#a1a1aa" radius={[0, 3, 3, 0]} name="시장 비율" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+          {stackTrends.data?.dataBaseDate && (
+            <p className="mt-1 text-xs text-zinc-400">시장 데이터 기준일: {stackTrends.data.dataBaseDate}</p>
+          )}
+        </ChartCard>
+
+        {/* DASH-06: 개인 vs 시장 기술 스택 비교 */}
         <ChartCard
           title="기술 스택 비교 (내 지원 vs 시장)"
-          badge="DASH-04·06"
+          badge="DASH-06"
           isLoading={comparison.isLoading}
           isError={comparison.isError}
           onRetry={comparison.refetch}
