@@ -54,8 +54,9 @@ dist/
 *.njsproj
 *.sln
 *.sw?
-.vscode/*
-!.vscode/extensions.json
+# .vscode 공유 (settings/tasks/launch 는 팀 공용)
+# 개인 설정만 제외
+.vscode/*.code-snippets
 
 # ── OS ──
 .DS_Store
