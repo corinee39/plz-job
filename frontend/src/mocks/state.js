@@ -10,7 +10,7 @@ export const mockJobPostings = [
     position: "백엔드",
     deadline: "2026-07-01",
     url: "https://example.com/job/1",
-    stage: "APPLIED",
+    currentStage: "APPLIED",
   },
   {
     jobPostingId: 2,
@@ -20,7 +20,7 @@ export const mockJobPostings = [
     position: "프론트엔드",
     deadline: "2026-06-30",
     url: "https://example.com/job/2",
-    stage: "DOCUMENT_PASS",
+    currentStage: "DOCUMENT_PASS",
   },
 ];
 

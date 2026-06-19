@@ -36,7 +36,7 @@ function findVersion(versionId) {
 
 export const documentHandlers = [
   // 문서 목록 — 각 문서의 최신 버전 요약 (DOC-01)
-  http.get("/api/documents", () =>
+  http.get("*/api/documents", () =>
     ok(
       mockDocuments.map((d) => ({
         documentId: d.documentId,
@@ -50,7 +50,7 @@ export const documentHandlers = [
   ),
 
   // 문서 상세 — 버전 목록 포함 (DOC-02·03)
-  http.get("/api/documents/:documentId", ({ params }) => {
+  http.get("*/api/documents/:documentId", ({ params }) => {
     const doc = mockDocuments.find((d) => d.documentId === Number(params.documentId));
     if (!doc) {
       return HttpResponse.json(
@@ -62,7 +62,7 @@ export const documentHandlers = [
   }),
 
   // 문서(논리 단위) 생성 (DOC-01·02)
-  http.post("/api/documents", async ({ request }) => {
+  http.post("*/api/documents", async ({ request }) => {
     const body = await request.json();
     if (!body.documentType || !body.title) {
       return HttpResponse.json(
@@ -89,7 +89,7 @@ export const documentHandlers = [
   }),
 
   // 버전 업로드 — multipart/form-data, PDF/TXT·10MB 검증 (DOC-01·02·05·06)
-  http.post("/api/documents/:documentId/versions", async ({ params, request }) => {
+  http.post("*/api/documents/:documentId/versions", async ({ params, request }) => {
     const doc = mockDocuments.find((d) => d.documentId === Number(params.documentId));
     if (!doc) {
       return HttpResponse.json(
@@ -149,7 +149,7 @@ export const documentHandlers = [
   }),
 
   // 버전 다운로드 — 파일 스트림(blob) (DOC-04)
-  http.get("/api/document-versions/:versionId/download", ({ params }) => {
+  http.get("*/api/document-versions/:versionId/download", ({ params }) => {
     const found = findVersion(Number(params.versionId));
     if (!found) {
       return HttpResponse.json(
@@ -169,7 +169,7 @@ export const documentHandlers = [
   }),
 
   // 버전 삭제 (DOC-04)
-  http.delete("/api/document-versions/:versionId", ({ params }) => {
+  http.delete("*/api/document-versions/:versionId", ({ params }) => {
     const found = findVersion(Number(params.versionId));
     if (found) {
       found.doc.versions = found.doc.versions.filter(
@@ -180,7 +180,7 @@ export const documentHandlers = [
   }),
 
   // 공고(지원)에 제출 문서 버전 연결 (DOC-03)
-  http.post("/api/applications/:applicationId/documents/:versionId", ({ params }) => {
+  http.post("*/api/applications/:applicationId/documents/:versionId", ({ params }) => {
     const appId = Number(params.applicationId);
     const found = findVersion(Number(params.versionId));
     if (!found) {

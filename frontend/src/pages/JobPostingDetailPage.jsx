@@ -318,14 +318,14 @@ function SubmittedDocumentsSection({ appId, jobPostingId, submittedDocuments }) 
   );
 }
 
+// PROC-01·02 — 일정 섹션 (§4.4: startAt, memo — scheduledAt·location·notes 미사용)
 function ScheduleSection({ appId }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     scheduleType: "INTERVIEW",
-    scheduledAt: "",
-    location: "",
-    notes: "",
+    startAt: "",
+    memo: "",
   });
 
   const { data: schedules = [], isLoading } = useQuery({
@@ -340,7 +340,7 @@ function ScheduleSection({ appId }) {
       qc.invalidateQueries({ queryKey: ["schedules", appId] });
       qc.invalidateQueries({ queryKey: ["schedules"] });
       setShowForm(false);
-      setForm({ scheduleType: "INTERVIEW", scheduledAt: "", location: "", notes: "" });
+      setForm({ scheduleType: "INTERVIEW", startAt: "", memo: "" });
     },
     onError: (err) => alert(err?.message ?? "일정 등록에 실패했습니다."),
   });
@@ -380,31 +380,25 @@ function ScheduleSection({ appId }) {
             </select>
             <input
               type="datetime-local"
-              value={form.scheduledAt}
-              onChange={set("scheduledAt")}
+              value={form.startAt}
+              onChange={set("startAt")}
               required
               className={inputCls}
             />
           </div>
           <input
-            placeholder="장소 (선택)"
-            value={form.location}
-            onChange={set("location")}
-            className={`w-full ${inputCls}`}
-          />
-          <input
             placeholder="메모 (선택)"
-            value={form.notes}
-            onChange={set("notes")}
+            value={form.memo}
+            onChange={set("memo")}
             className={`w-full ${inputCls}`}
           />
           <button
-            disabled={!form.scheduledAt || createMutation.isPending}
+            disabled={!form.startAt || createMutation.isPending}
             onClick={() =>
               createMutation.mutate({
-                ...form,
-                location: form.location || null,
-                notes: form.notes || null,
+                scheduleType: form.scheduleType,
+                startAt: form.startAt,
+                memo: form.memo || null,
               })
             }
             className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-3 py-1.5 text-xs text-white dark:text-zinc-900 disabled:opacity-40"
@@ -432,7 +426,7 @@ function ScheduleSection({ appId }) {
                     {SCHEDULE_TYPE_LABELS[s.scheduleType] ?? s.scheduleType}
                   </span>
                   <span className="text-xs text-zinc-500">
-                    {new Date(s.scheduledAt).toLocaleString("ko-KR", {
+                    {new Date(s.startAt).toLocaleString("ko-KR", {
                       month: "numeric",
                       day: "numeric",
                       weekday: "short",
@@ -441,10 +435,8 @@ function ScheduleSection({ appId }) {
                     })}
                   </span>
                 </div>
-                {(s.location || s.notes) && (
-                  <p className="text-xs text-zinc-400">
-                    {[s.location, s.notes].filter(Boolean).join(" · ")}
-                  </p>
+                {s.memo && (
+                  <p className="text-xs text-zinc-400">{s.memo}</p>
                 )}
               </div>
               <button

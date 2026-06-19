@@ -12,11 +12,12 @@ import {
 } from "../features/retrospectives/api";
 import { RETRO_TYPE_LABELS, DIFFICULTY_LABELS } from "../constants/stageCodes";
 
+// API 명세서 §4.4 — PROC-03·04: 필드명 type / improvement (구 retrospectiveType / improvements 아님)
 const EMPTY_FORM = {
-  retrospectiveType: "CODING_TEST",
+  type: "CODING_TEST",
   difficulty: "NORMAL",
   content: "",
-  improvements: "",
+  improvement: "",
 };
 
 const selectCls =
@@ -82,7 +83,7 @@ export default function RetrospectivePage() {
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
         <h2 className="text-sm font-semibold">회고 추가</h2>
         <div className="flex flex-wrap gap-2">
-          <select value={form.retrospectiveType} onChange={set("retrospectiveType")} className={selectCls}>
+          <select value={form.type} onChange={set("type")} className={selectCls}>
             {Object.entries(RETRO_TYPE_LABELS).map(([v, l]) => (
               <option key={v} value={v}>{l}</option>
             ))}
@@ -102,8 +103,8 @@ export default function RetrospectivePage() {
         />
         <textarea
           placeholder="개선점 (선택)"
-          value={form.improvements}
-          onChange={set("improvements")}
+          value={form.improvement}
+          onChange={set("improvement")}
           rows={2}
           className={textareaCls}
         />
@@ -111,8 +112,10 @@ export default function RetrospectivePage() {
           disabled={!form.content.trim() || createMutation.isPending}
           onClick={() =>
             createMutation.mutate({
-              ...form,
-              improvements: form.improvements.trim() || null,
+              type: form.type,
+              difficulty: form.difficulty,
+              content: form.content,
+              improvement: form.improvement.trim() || null,
             })
           }
           className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
@@ -152,7 +155,7 @@ export default function RetrospectivePage() {
                   <>
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex flex-wrap gap-2">
-                        <Chip>{RETRO_TYPE_LABELS[r.retrospectiveType] ?? r.retrospectiveType}</Chip>
+                        <Chip>{RETRO_TYPE_LABELS[r.type] ?? r.type}</Chip>
                         <Chip>{DIFFICULTY_LABELS[r.difficulty] ?? r.difficulty}</Chip>
                       </div>
                       <div className="flex shrink-0 gap-3">
@@ -160,10 +163,10 @@ export default function RetrospectivePage() {
                           onClick={() => {
                             setEditId(r.retrospectiveId);
                             setEditForm({
-                              retrospectiveType: r.retrospectiveType,
+                              type: r.type,
                               difficulty: r.difficulty,
                               content: r.content,
-                              improvements: r.improvements ?? "",
+                              improvement: r.improvement ?? "",
                             });
                           }}
                           className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -183,11 +186,11 @@ export default function RetrospectivePage() {
                       </div>
                     </div>
                     <p className="text-sm whitespace-pre-wrap">{r.content}</p>
-                    {r.improvements && (
+                    {r.improvement && (
                       <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3">
                         <p className="mb-1 text-xs font-medium text-zinc-500">개선점</p>
                         <p className="text-sm whitespace-pre-wrap text-zinc-600 dark:text-zinc-400">
-                          {r.improvements}
+                          {r.improvement}
                         </p>
                       </div>
                     )}
@@ -213,12 +216,13 @@ function Chip({ children }) {
   );
 }
 
+// PROC-03 — 회고 수정 폼 (§4.4: type / improvement)
 function EditRetroForm({ form, setForm, onSave, onCancel, isPending }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
-        <select value={form.retrospectiveType} onChange={set("retrospectiveType")} className={selectCls}>
+        <select value={form.type} onChange={set("type")} className={selectCls}>
           {Object.entries(RETRO_TYPE_LABELS).map(([v, l]) => (
             <option key={v} value={v}>{l}</option>
           ))}
@@ -237,8 +241,8 @@ function EditRetroForm({ form, setForm, onSave, onCancel, isPending }) {
         className={textareaCls}
       />
       <textarea
-        value={form.improvements}
-        onChange={set("improvements")}
+        value={form.improvement}
+        onChange={set("improvement")}
         rows={2}
         placeholder="개선점"
         className={textareaCls}
