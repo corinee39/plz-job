@@ -1,5 +1,7 @@
 import { http } from "msw";
 import { ok } from "../helpers.js";
+// 시장 데이터(DASH-04/05/06)는 etl/run.py 크롤링·집계 산출물에서 생성된다.
+import market from "../data/market.json";
 
 export const dashboardHandlers = [
   // DASH-03, ETL-10 — KPI 요약
@@ -48,45 +50,12 @@ export const dashboardHandlers = [
     })
   ),
 
-  // DASH-04 — 기술 스택 추세 (§4.7)
-  http.get("*/api/market/stack-trends", () =>
-    ok({
-      dataBaseDate: "2026-06-16",
-      trends: [
-        { stack: "Java", postingCount: 1240, ratio: 22.0 },
-        { stack: "Spring", postingCount: 1100, ratio: 19.5 },
-        { stack: "React", postingCount: 980, ratio: 17.4 },
-        { stack: "Python", postingCount: 870, ratio: 15.4 },
-        { stack: "Kubernetes", postingCount: 640, ratio: 11.4 },
-      ],
-    })
-  ),
+  // DASH-04 — 기술 스택 추세 (§4.7) — 사람인 크롤링 집계
+  http.get("*/api/market/stack-trends", () => ok(market.stackTrends)),
 
-  // DASH-05 — 지역별 분포
-  http.get("*/api/market/region-distribution", () =>
-    ok({
-      dataBaseDate: "2026-06-16",
-      regions: [
-        { region: "서울", postingCount: 5200 },
-        { region: "경기", postingCount: 2100 },
-        { region: "부산", postingCount: 640 },
-        { region: "대전", postingCount: 380 },
-        { region: "인천", postingCount: 290 },
-      ],
-    })
-  ),
+  // DASH-05 — 지역별 분포 — 사람인 크롤링 집계
+  http.get("*/api/market/region-distribution", () => ok(market.regionDistribution)),
 
-  // DASH-06 — 개인 vs 시장 기술 스택 비교
-  http.get("*/api/market/user-comparison", () =>
-    ok({
-      dataBaseDate: "2026-06-16",
-      comparison: [
-        { stack: "Java", userRatio: 40.0, marketRatio: 22.0, gap: 18.0 },
-        { stack: "Spring", userRatio: 35.0, marketRatio: 19.5, gap: 15.5 },
-        { stack: "React", userRatio: 20.0, marketRatio: 17.4, gap: 2.6 },
-        { stack: "Python", userRatio: 10.0, marketRatio: 15.4, gap: -5.4 },
-        { stack: "Kubernetes", userRatio: 5.0, marketRatio: 11.4, gap: -6.4 },
-      ],
-    })
-  ),
+  // DASH-06 — 개인 vs 시장 기술 스택 비교 (marketRatio만 크롤링 실데이터)
+  http.get("*/api/market/user-comparison", () => ok(market.userComparison)),
 ];

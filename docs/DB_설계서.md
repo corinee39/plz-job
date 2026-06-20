@@ -19,6 +19,8 @@
 
 > 🤔 **왜 한 스키마에 같이 두나?** DA 플랜 §2 "Oracle: BE와 동일한 인스턴스·스키마 사용". BE는 시장/분석 테이블을 **읽기 전용**으로만 조회한다(요구사항 §12.2: 원본 HDFS 직접 조회 금지, 집계 테이블만 조회). 즉 `plzjob` 계정 하나에 16개가 공존하고, 쓰기 권한만 운영상 구분한다.
 
+> ⚠️ **현재 MVP 상태(미사용):** Python ETL이 사람인 크롤링 기반으로 바뀌면서(`etl/` 디렉터리 참고) 위 시장·분석 6개 테이블에는 **아무것도 적재되지 않는다**. 크롤링·태깅·집계 결과는 CSV로 누적 저장된 뒤 `frontend/src/mocks/data/market.json`으로 export되어 프론트 MSW가 직접 서빙한다(Spring Boot·Oracle 미경유, `plz_job_requirements.md` §7.7·§9 참고). 아래 §5의 6개 테이블 스키마는 **삭제하지 않고** 추후 "크롤링 결과를 Oracle에 적재 → Spring Boot가 서빙"하는 구조로 전환할 경우를 위해 유지한다.
+
 ---
 
 ## 2. 공통 설계 규칙
@@ -149,7 +151,9 @@ erDiagram
 
 ---
 
-## 5. 테이블 상세 (시장·분석 — ETL 적재)
+## 5. 테이블 상세 (시장·분석 — ETL 적재) ⚠️ 현재 MVP 미사용
+
+> 아래 6개 테이블은 §1의 주석대로 현재 크롤링 ETL이 적재하지 않는다. 스키마 설계 기록 및 향후 전환 옵션으로 남겨둔다.
 
 ### 5.1 `market_job_postings` / `market_job_stacks`
 - 공고: `(source, external_id)` **UNIQUE**(멱등 키, ETL-08). `external_id`는 외부 ID 또는 정규화 URL의 SHA-256. 표준 컬럼: `position`, `region`(=표준 시·도), `sigungu`, `posted_date`, `deadline`, `base_date`.
@@ -201,15 +205,21 @@ SELECT table_name FROM user_tables ORDER BY 1;   -- 16개 확인
 
 ### JPA `ddl-auto`와의 관계
 - `application.yaml`은 학습용 `ddl-auto: update`. 빈 스키마에서 BE를 기동하면 **엔티티 10종이 자동 생성**되지만, ETL 6종은 JPA가 모르므로 생성되지 않는다.
-- 따라서 **`db/schema.sql`을 한 번 실행**해 16종 전체를 만들어 두는 것을 권장(특히 DA가 ETL 테이블을 먼저 써야 함). 이후 `ddl-auto: update`는 기존 테이블과 충돌 없이 통과한다.
+- `db/schema.sql`을 한 번 실행하면 16종 전체를 만들 수 있다. 다만 **현재 MVP에서는 ETL 6종이 비어 있어도 무방**하다(§1·§5 주석 참고) — 크롤링 결과는 Oracle이 아니라 정적 JSON으로 프론트에 직접 전달되기 때문이다. ETL 6종은 향후 Spring Boot·Oracle 경유로 전환할 때를 위해 스키마만 준비해 둔다.
 - 운영 지향이면 `ddl-auto: validate` + 본 DDL을 형상관리(Flyway 등)하는 방식으로 전환한다.
 
 ---
 
 ## 8. 검증 체크리스트
-- [ ] `db/schema.sql` 무오류 실행, `user_tables` 16개.
-- [ ] `user_sequences` 16개(BE 12 @50 / ETL 4 @1).
-- [ ] `uq_user_social`, `uq_applications_job`, `uq_market_job`, analytics 복합 UNIQUE 4종 존재.
+
+### 현재 MVP(서비스 도메인만 사용)
+- [ ] `db/schema.sql` 무오류 실행, `user_tables` 16개(ETL 6종은 비어 있어도 정상).
+- [ ] `uq_user_social`, `uq_applications_job` 존재.
 - [ ] BE 기동(`ddl-auto: update`) 시 엔티티-테이블 매핑 오류 없음.
+- [ ] `etl/run.py` 실행 결과(`frontend/src/mocks/data/market.json`)가 `/api/market/*` MSW 응답 계약과 일치.
+
+### 향후 Spring Boot·Oracle 경유 전환 시(현재 미해당)
+- [ ] `user_sequences` 16개(BE 12 @50 / ETL 4 @1).
+- [ ] `uq_market_job`, analytics 복합 UNIQUE 4종 존재.
 - [ ] `analytics_*` 시드(`AnalyticsSeeder`) insert 성공 → `/api/market/*` 조회 확인.
 - [ ] 엔티티 보강(§5.2 ⚠️): `AnalyticsStackTrend.region`, `AnalyticsRegionJob.position` 추가 반영.
