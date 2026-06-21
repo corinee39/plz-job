@@ -74,22 +74,7 @@ public class JobPostingService {
 
     public JobPostingDetailResponse getDetail(Long userId, Long jobPostingId) {
         Application app = findOwnedApplication(userId, jobPostingId);
-        return JobPostingDetailResponse.from(app, submittedDocuments(app.getId()));
-    }
-
-    /** 지원에 연결된 제출 문서(버전) 목록. */
-    private List<JobPostingDetailResponse.SubmittedDocument> submittedDocuments(Long applicationId) {
-        return applicationDocumentRepository.findByApplicationId(applicationId).stream()
-                .map(ad -> {
-                    var v = ad.getVersion();
-                    return JobPostingDetailResponse.SubmittedDocument.builder()
-                            .versionId(v.getId())
-                            .versionName(v.getVersionName())
-                            .documentTitle(v.getDocument().getTitle())
-                            .documentType(v.getDocument().getDocumentType().name())
-                            .build();
-                })
-                .toList();
+        return JobPostingDetailResponse.from(app, applicationDocumentRepository.findByApplicationId(app.getId()));
     }
 
     @Transactional

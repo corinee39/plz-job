@@ -6,11 +6,11 @@ export async function generateInterviewQuestions(
   applicationId,
   { documentVersionId, regenerate = false, includeRetrospectives = false }
 ) {
-  return apiClient.post(`/ai/applications/${applicationId}/interview-questions`, {
-    documentVersionId,
-    regenerate,
-    includeRetrospectives,
-  });
+  return apiClient.post(
+    `/ai/applications/${applicationId}/interview-questions`,
+    { documentVersionId, regenerate, includeRetrospectives },
+    { timeout: 180_000 }
+  );
 }
 
 // AI-09 — 생성 이력 조회 (type: INTERVIEW_QUESTIONS | DASHBOARD_REPORT)

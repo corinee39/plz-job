@@ -3,6 +3,7 @@ package com.plzjob.backend.client;
 import com.plzjob.backend.exception.CustomException;
 import com.plzjob.backend.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import java.util.Map;
@@ -10,7 +11,16 @@ import java.util.Map;
 @Component
 public class LlmClient {
 
-    private final RestClient rest = RestClient.create();
+    private static final int LLM_TIMEOUT_MS = 180_000;
+
+    private final RestClient rest;
+
+    public LlmClient() {
+        SimpleClientHttpRequestFactory f = new SimpleClientHttpRequestFactory();
+        f.setConnectTimeout(5_000);
+        f.setReadTimeout(LLM_TIMEOUT_MS);
+        this.rest = RestClient.builder().requestFactory(f).build();
+    }
 
     @Value("${llm.base-url}") private String baseUrl;
     @Value("${llm.model}")    private String model;

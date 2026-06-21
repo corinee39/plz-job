@@ -1,6 +1,7 @@
 package com.plzjob.backend.dto.response;
 
 import com.plzjob.backend.entity.Application;
+import com.plzjob.backend.entity.ApplicationDocument;
 import lombok.Builder;
 import lombok.Getter;
 import java.time.LocalDate;
@@ -16,25 +17,18 @@ public class JobPostingDetailResponse {
     private String url;
     private String position;
     private String region;
-    private LocalDate appliedAt;   // 지원일(APPLICATIONS.applied_at). 기존 startDate 표시를 대체.
+    private LocalDate appliedAt;
     private LocalDate deadline;
     private List<String> techStacks;
     private String description;
     private String currentStage;
     private String finalResult;
     private boolean favorite;
-    private List<SubmittedDocument> submittedDocuments;
+    private List<SubmittedDocumentInfo> submittedDocuments;
 
-    @Getter
-    @Builder
-    public static class SubmittedDocument {
-        private Long versionId;
-        private String versionName;
-        private String documentTitle;
-        private String documentType;
-    }
+    public record SubmittedDocumentInfo(Long versionId, String documentTitle, String versionName) {}
 
-    public static JobPostingDetailResponse from(Application a, List<SubmittedDocument> submittedDocuments) {
+    public static JobPostingDetailResponse from(Application a, List<ApplicationDocument> docs) {
         var p = a.getJobPosting();
         return JobPostingDetailResponse.builder()
                 .jobPostingId(p.getId()).applicationId(a.getId())
@@ -45,7 +39,16 @@ public class JobPostingDetailResponse {
                 .techStacks(p.getTechStacks()).description(p.getDescription())
                 .currentStage(a.getCurrentStage().name()).finalResult(a.getFinalResult().name())
                 .favorite(p.isFavorite())
-                .submittedDocuments(submittedDocuments)
+                .submittedDocuments(docs.stream()
+                        .map(d -> new SubmittedDocumentInfo(
+                                d.getVersion().getId(),
+                                d.getVersion().getDocument().getTitle(),
+                                d.getVersion().getVersionName()))
+                        .toList())
                 .build();
+    }
+
+    public static JobPostingDetailResponse from(Application a) {
+        return from(a, List.of());
     }
 }

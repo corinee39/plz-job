@@ -47,7 +47,6 @@ export default function InterviewAiPage() {
     enabled: !!jobPostingId,
   });
 
-  // applicationId는 실서버 DB id — job 쿼리로 받아온다(MSW 하드코딩 방식 제거)
   const applicationId = job.data?.applicationId;
 
   const retros = useRetrospectives(applicationId);
