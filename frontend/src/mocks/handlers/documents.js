@@ -168,6 +168,13 @@ export const documentHandlers = [
     });
   }),
 
+  // 문서 삭제 — 버전도 모두 삭제 (DOC-01)
+  http.delete("*/api/documents/:documentId", ({ params }) => {
+    const idx = mockDocuments.findIndex((d) => d.documentId === Number(params.documentId));
+    if (idx !== -1) mockDocuments.splice(idx, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   // 버전 삭제 (DOC-04)
   http.delete("*/api/document-versions/:versionId", ({ params }) => {
     const found = findVersion(Number(params.versionId));

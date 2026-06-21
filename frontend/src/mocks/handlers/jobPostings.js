@@ -134,6 +134,28 @@ export const jobHandlers = [
     return ok({ applicationId: appId, currentStage: body.toStage });
   }),
 
+  // 공고 수정 (JOB-06) — deadline 등 필드 부분 업데이트
+  http.put("*/api/job-postings/:id", async ({ params, request }) => {
+    const job = mockJobPostings.find((j) => j.jobPostingId === Number(params.id));
+    if (!job) {
+      return HttpResponse.json(
+        { success: false, data: null, error: { code: "JOB_NOT_FOUND", message: "공고를 찾을 수 없습니다." } },
+        { status: 404 }
+      );
+    }
+    const body = await request.json();
+    const updatable = ["companyName", "title", "deadline", "region", "position", "techStacks", "description", "startDate"];
+    updatable.forEach((k) => { if (k in body) job[k] = body[k]; });
+    return ok({ ...job, applicationId: job.jobPostingId + 1000 });
+  }),
+
+  // 공고 삭제 (JOB-06)
+  http.delete("*/api/job-postings/:id", ({ params }) => {
+    const idx = mockJobPostings.findIndex((j) => j.jobPostingId === Number(params.id));
+    if (idx !== -1) mockJobPostings.splice(idx, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   // 단계 이력 조회
   http.get("*/api/applications/:applicationId/stage-histories", ({ params }) => {
     const appId = Number(params.applicationId);

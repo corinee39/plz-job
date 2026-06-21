@@ -10,6 +10,7 @@ import {
   uploadVersion,
   downloadVersion,
   deleteVersion,
+  deleteDocument,
 } from "../features/documents/api";
 import { DOCUMENT_TYPE_LABELS } from "../constants/stageCodes";
 
@@ -41,9 +42,18 @@ export default function DocumentsPage() {
     mutationFn: createDocument,
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["documents"] });
-      setSelectedId(data.documentId); // 새 문서를 바로 선택해 버전 업로드로 이어준다
+      setSelectedId(data.documentId);
     },
     onError: (err) => alert(err?.message ?? "문서 생성에 실패했습니다."),
+  });
+
+  const deleteDocMutation = useMutation({
+    mutationFn: deleteDocument,
+    onSuccess: (_, docId) => {
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      if (selectedId === docId) setSelectedId(null);
+    },
+    onError: (err) => alert(err?.message ?? "문서 삭제에 실패했습니다."),
   });
 
   return (
@@ -72,26 +82,40 @@ export default function DocumentsPage() {
               <ul className="space-y-1.5">
                 {docs.data.map((d) => (
                   <li key={d.documentId}>
-                    <button
-                      onClick={() => setSelectedId(d.documentId)}
-                      className={`w-full rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
+                    <div
+                      className={`flex items-start gap-1 rounded-lg border transition-colors ${
                         selectedId === d.documentId
                           ? "border-zinc-900 dark:border-zinc-100 bg-zinc-50 dark:bg-zinc-800"
                           : "border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                       }`}
                     >
-                      <span className="flex items-center gap-2">
-                        <Chip>{DOCUMENT_TYPE_LABELS[d.documentType] ?? d.documentType}</Chip>
-                        <span className="font-medium truncate">{d.title}</span>
-                      </span>
-                      {/* 백엔드 목록 DTO는 documentId·documentType·title 만 반환 → 버전 요약이 올 때만 표시 */}
-                      {d.versionCount != null && (
-                        <span className="mt-1 block text-xs text-zinc-400">
-                          버전 {d.versionCount}개
-                          {d.latestVersionName ? ` · 최신 ${d.latestVersionName}` : " · 업로드 전"}
+                      <button
+                        onClick={() => setSelectedId(d.documentId)}
+                        className="flex-1 px-3 py-2.5 text-left text-sm"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Chip>{DOCUMENT_TYPE_LABELS[d.documentType] ?? d.documentType}</Chip>
+                          <span className="font-medium truncate">{d.title}</span>
                         </span>
-                      )}
-                    </button>
+                        {d.versionCount != null && (
+                          <span className="mt-1 block text-xs text-zinc-400">
+                            버전 {d.versionCount}개
+                            {d.latestVersionName ? ` · 최신 ${d.latestVersionName}` : " · 업로드 전"}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        disabled={deleteDocMutation.isPending}
+                        onClick={() => {
+                          if (confirm(`'${d.title}'을 삭제할까요? 모든 버전도 함께 삭제됩니다.`))
+                            deleteDocMutation.mutate(d.documentId);
+                        }}
+                        className="px-2.5 py-2.5 text-zinc-400 hover:text-red-500 shrink-0 text-sm leading-none"
+                        title="문서 삭제"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -156,7 +180,6 @@ function VersionPanel({ documentId, detail }) {
     setUploadMsg(null);
     const file = fileRef.current?.files?.[0];
     if (!file) return;
-    // 백엔드도 최종 검증하지만, 클라이언트에서 먼저 막아 사용자 경험을 높인다 (§12.1, DOC-01)
     if (!ALLOWED.includes(file.type)) {
       setUploadMsg({ type: "error", text: "PDF 또는 TXT 파일만 업로드할 수 있어요." });
       return;
@@ -170,7 +193,7 @@ function VersionPanel({ documentId, detail }) {
 
   const handleDownload = async (versionId, fileName) => {
     try {
-      const blob = await downloadVersion(versionId); // blob 응답
+      const blob = await downloadVersion(versionId);
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
@@ -225,6 +248,7 @@ function VersionPanel({ documentId, detail }) {
             type="file"
             accept=".pdf,.txt,application/pdf,text/plain"
             required
+            onChange={() => setUploadMsg(null)}
             className="text-sm text-zinc-600 dark:text-zinc-300 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-900 file:px-3 file:py-1.5 file:text-xs file:text-white dark:file:bg-zinc-100 dark:file:text-zinc-900"
           />
           <button
@@ -279,7 +303,7 @@ function VersionPanel({ documentId, detail }) {
                 <div className="flex shrink-0 gap-2">
                   <button
                     onClick={() => handleDownload(v.versionId, v.fileName)}
-                    className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    className="rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                   >
                     다운로드
                   </button>
@@ -288,7 +312,7 @@ function VersionPanel({ documentId, detail }) {
                     onClick={() => {
                       if (confirm("이 버전을 삭제할까요?")) removeVersion.mutate(v.versionId);
                     }}
-                    className="text-xs text-red-500 hover:text-red-700"
+                    className="rounded-md border border-red-200 dark:border-red-900 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40"
                   >
                     삭제
                   </button>

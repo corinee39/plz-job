@@ -248,7 +248,7 @@ export default function SchedulePage() {
                   <div className="flex shrink-0 gap-2">
                     <button
                       onClick={startEdit}
-                      className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                      className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800"
                     >
                       수정
                     </button>
@@ -258,13 +258,13 @@ export default function SchedulePage() {
                         if (confirm("이 일정을 삭제할까요?"))
                           deleteMutation.mutate(selected.scheduleId);
                       }}
-                      className="text-xs text-red-500 hover:text-red-700"
+                      className="rounded-md border border-red-200 dark:border-red-900 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40"
                     >
                       삭제
                     </button>
                     <button
                       onClick={() => setSelected(null)}
-                      className="text-xs text-zinc-400 hover:text-zinc-600"
+                      className="rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                     >
                       닫기
                     </button>
@@ -319,7 +319,10 @@ function EditScheduleRow({ form, setForm, onSave, onCancel, isPending }) {
         >
           {isPending ? "저장 중…" : "저장"}
         </button>
-        <button onClick={onCancel} className="text-xs text-zinc-500 hover:text-zinc-900">
+        <button
+          onClick={onCancel}
+          className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800"
+        >
           취소
         </button>
       </div>
