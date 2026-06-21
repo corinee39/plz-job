@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from common.dates import is_open, parse_deadline
+from common.dates import is_open, parse_deadline, parse_posted_date
 from common.logger import get_logger
 
 log = get_logger("transform.enrich")
@@ -40,13 +40,14 @@ def _load_stack_dict() -> list[tuple[str, str, re.Pattern]]:
     return out
 
 
-def _load_region_map() -> list[tuple[str, str]]:
-    """(alias, sido) 리스트. 긴 alias 우선 매칭하도록 길이 내림차순 정렬."""
+def _load_region_map() -> list[tuple[str, str, str]]:
+    """(alias, sido, sigungu) 리스트. 긴 alias 우선 매칭하도록 길이 내림차순 정렬."""
     df = pd.read_csv(DICT_DIR / "region_map.csv").fillna("")
-    pairs = [(str(a).strip(), str(s).strip())
-             for a, s in zip(df["alias"], df["sido"]) if str(a).strip()]
-    pairs.sort(key=lambda x: len(x[0]), reverse=True)
-    return pairs
+    triples = [(str(a).strip(), str(s).strip(), str(g).strip())
+               for a, s, g in zip(df["alias"], df["sido"], df["sigungu"])
+               if str(a).strip()]
+    triples.sort(key=lambda x: len(x[0]), reverse=True)
+    return triples
 
 
 def _load_position_map() -> list[tuple[str, str]]:
@@ -56,24 +57,35 @@ def _load_position_map() -> list[tuple[str, str]]:
 
 
 def _match_stacks(text: str, sector_keywords: list[str],
-                  stack_dict) -> list[str]:
-    """제목 + sector 키워드 텍스트에서 표준 스택명 집합 추출."""
+                  stack_dict) -> list[tuple[str, str]]:
+    """제목 + sector 키워드 텍스트에서 (표준 스택명, 매칭 키워드) 추출.
+
+    한 스택이 여러 키워드에 걸리면 처음 매칭된 키워드를 보존한다.
+    스택명 오름차순으로 정렬해 반환(stacks 컬럼 순서 안정화).
+    """
     haystack = (text + " " + " ".join(sector_keywords)).lower()
-    found = []
-    for stack, _kw, pat in stack_dict:
-        if pat.search(haystack):
-            found.append(stack)
-    return sorted(set(found))
+    matched: dict[str, str] = {}
+    for stack, kw, pat in stack_dict:
+        if stack not in matched and pat.search(haystack):
+            matched[stack] = kw
+    return sorted(matched.items())
 
 
-def _match_region(location_raw: str, region_pairs) -> str:
-    """'서울 강남구' 같은 지역 문자열 → 표준 시·도. 미매칭 시 '기타'."""
+def _match_region(location_raw: str, region_triples) -> tuple[str, str]:
+    """'서울 강남구' 같은 지역 문자열 → (표준 시·도, 시·군·구). 미매칭 시 ('기타','').
+
+    사전에 시·군·구가 지정된 별칭(예: 판교→분당구)은 그 값을 쓰고,
+    없으면 시·도 별칭을 제거한 나머지를 시·군·구로 본다(예: '서울 강남구'→'강남구').
+    """
     if not location_raw:
-        return "기타"
-    for alias, sido in region_pairs:
+        return "기타", ""
+    for alias, sido, sigungu in region_triples:
         if alias and alias in location_raw:
-            return sido
-    return "기타"
+            if sigungu:
+                return sido, sigungu
+            rest = location_raw.replace(alias, "", 1).strip()
+            return sido, rest
+    return "기타", ""
 
 
 def _match_position(search_keyword: str, title: str, pos_pairs) -> str:
@@ -97,23 +109,27 @@ def enrich(rows: list[dict]) -> pd.DataFrame:
         return pd.DataFrame()
 
     df = pd.DataFrame(rows)
-    for col in ("sector_keywords", "deadline", "collected_date"):
+    for col in ("sector_keywords", "deadline", "posted_raw",
+                "location_raw", "collected_date"):
         if col not in df.columns:
             df[col] = ""
         df[col] = df[col].fillna("")
 
     stack_dict = _load_stack_dict()
-    region_pairs = _load_region_map()
+    region_triples = _load_region_map()
     pos_pairs = _load_position_map()
     today = date.today()
 
-    stacks_col, region_col, pos_col = [], [], []
-    deadline_col, open_col = [], []
+    stacks_col, stack_kw_col, region_col, sigungu_col, pos_col = [], [], [], [], []
+    deadline_col, posted_col, open_col = [], [], []
     for _, r in df.iterrows():
         sector_kws = [s for s in str(r["sector_keywords"]).split("|") if s]
-        stacks = _match_stacks(str(r["title"]), sector_kws, stack_dict)
-        stacks_col.append("|".join(stacks))
-        region_col.append(_match_region(str(r["location_raw"]), region_pairs))
+        pairs = _match_stacks(str(r["title"]), sector_kws, stack_dict)
+        stacks_col.append("|".join(s for s, _ in pairs))
+        stack_kw_col.append("|".join(kw for _, kw in pairs))
+        sido, sigungu = _match_region(str(r["location_raw"]), region_triples)
+        region_col.append(sido)
+        sigungu_col.append(sigungu)
         pos_col.append(_match_position(str(r["search_keyword"]),
                                        str(r["title"]), pos_pairs))
 
@@ -123,12 +139,17 @@ def enrich(rows: list[dict]) -> pd.DataFrame:
             collected = today
         dd = parse_deadline(str(r["deadline"]), collected)
         deadline_col.append(dd.isoformat() if dd else "")
+        pd_ = parse_posted_date(str(r["posted_raw"]))
+        posted_col.append(pd_.isoformat() if pd_ else "")
         open_col.append(is_open(dd, today))
 
     df["stacks"] = stacks_col
+    df["stack_keywords"] = stack_kw_col
     df["region"] = region_col
+    df["sigungu"] = sigungu_col
     df["position"] = pos_col
     df["deadline_date"] = deadline_col
+    df["posted_date"] = posted_col
     df["is_open"] = open_col
 
     n_with_stack = (df["stacks"] != "").sum()

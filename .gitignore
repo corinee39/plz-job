@@ -81,3 +81,5 @@ etl/logs/
 etl/data/raw/
 # 로컬 전처리 산출물
 etl/data/processed/
+# 파이프라인 실행 산출물
+etl/data/output/

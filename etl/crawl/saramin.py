@@ -47,6 +47,7 @@ class JobPosting:
     employment_type: str
     sector_keywords: list = field(default_factory=list)
     deadline: str = ""
+    posted_raw: str = ""
     url: str = ""
     search_keyword: str = ""
     collected_date: str = ""
@@ -64,6 +65,7 @@ class JobPosting:
             # CSV 저장을 위해 리스트는 '|' 구분 문자열로 직렬화
             "sector_keywords": "|".join(self.sector_keywords),
             "deadline": self.deadline,
+            "posted_raw": self.posted_raw,
             "url": self.url,
             "search_keyword": self.search_keyword,
             "collected_date": self.collected_date,
@@ -103,6 +105,8 @@ def _parse_item(item, keyword: str) -> JobPosting | None:
     sector_keywords = [k for k in sector_keywords if k]
 
     deadline = clean_text(_text(item, ".job_date .date"))
+    # .job_day: '등록일 26/05/19' / '수정일 26/05/19' (YY/MM/DD)
+    posted_raw = clean_text(_text(item, ".job_day"))
 
     return JobPosting(
         source="saramin",
@@ -115,6 +119,7 @@ def _parse_item(item, keyword: str) -> JobPosting | None:
         employment_type=employment_type,
         sector_keywords=sector_keywords,
         deadline=deadline,
+        posted_raw=posted_raw,
         url=url,
         search_keyword=keyword,
     )

@@ -47,8 +47,8 @@ def stack_trends(df: pd.DataFrame, top_n: int | None = 10) -> list[dict]:
     return out
 
 
-def region_distribution(df: pd.DataFrame, top_n: int = 10) -> list[dict]:
-    """시·도별 공고 수. '기타' 제외, 내림차순 top_n."""
+def region_distribution(df: pd.DataFrame, top_n: int | None = 10) -> list[dict]:
+    """시·도별 공고 수. '기타' 제외, 내림차순 top_n(None이면 전체)."""
     if df.empty:
         return []
     counts = (
@@ -56,8 +56,10 @@ def region_distribution(df: pd.DataFrame, top_n: int = 10) -> list[dict]:
         .groupby("region")["rec_idx"].nunique()
         .sort_values(ascending=False)
     )
+    if top_n is not None:
+        counts = counts.head(top_n)
     return [{"region": region, "postingCount": int(cnt)}
-            for region, cnt in counts.head(top_n).items()]
+            for region, cnt in counts.items()]
 
 
 def user_comparison(trends: list[dict],

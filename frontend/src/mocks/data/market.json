@@ -1,129 +1,137 @@
 {
-  "dataBaseDate": "2026-06-20",
+  "dataBaseDate": "2026-06-21",
   "stackTrends": {
-    "dataBaseDate": "2026-06-20",
+    "dataBaseDate": "2026-06-21",
     "trends": [
       {
-        "stack": "Java",
-        "postingCount": 67,
-        "ratio": 45.3
-      },
-      {
-        "stack": "JavaScript",
-        "postingCount": 27,
-        "ratio": 18.2
-      },
-      {
         "stack": "Python",
-        "postingCount": 23,
-        "ratio": 15.5
+        "postingCount": 77,
+        "ratio": 10.7
+      },
+      {
+        "stack": "Java",
+        "postingCount": 64,
+        "ratio": 8.9
       },
       {
         "stack": "AWS",
-        "postingCount": 18,
-        "ratio": 12.2
+        "postingCount": 59,
+        "ratio": 8.2
       },
       {
-        "stack": "Node.js",
-        "postingCount": 10,
-        "ratio": 6.8
+        "stack": "React",
+        "postingCount": 56,
+        "ratio": 7.8
       },
       {
-        "stack": "Git",
-        "postingCount": 10,
-        "ratio": 6.8
+        "stack": "JavaScript",
+        "postingCount": 44,
+        "ratio": 6.1
+      },
+      {
+        "stack": "Docker",
+        "postingCount": 36,
+        "ratio": 5.0
+      },
+      {
+        "stack": "Kubernetes",
+        "postingCount": 28,
+        "ratio": 3.9
       },
       {
         "stack": "MySQL",
-        "postingCount": 9,
-        "ratio": 6.1
+        "postingCount": 23,
+        "ratio": 3.2
       },
       {
-        "stack": "Spring",
-        "postingCount": 9,
-        "ratio": 6.1
+        "stack": "Git",
+        "postingCount": 13,
+        "ratio": 1.8
       },
       {
-        "stack": "Spring Boot",
-        "postingCount": 8,
-        "ratio": 5.4
-      },
-      {
-        "stack": "PHP",
-        "postingCount": 6,
-        "ratio": 4.1
+        "stack": "SQL",
+        "postingCount": 12,
+        "ratio": 1.7
       }
     ]
   },
   "regionDistribution": {
-    "dataBaseDate": "2026-06-20",
+    "dataBaseDate": "2026-06-21",
     "regions": [
       {
         "region": "서울",
-        "postingCount": 96
+        "postingCount": 462
       },
       {
         "region": "경기",
-        "postingCount": 32
+        "postingCount": 153
       },
       {
         "region": "부산",
-        "postingCount": 7
-      },
-      {
-        "region": "대구",
-        "postingCount": 6
+        "postingCount": 22
       },
       {
         "region": "대전",
-        "postingCount": 3
+        "postingCount": 17
       },
       {
-        "region": "경남",
-        "postingCount": 2
+        "region": "경북",
+        "postingCount": 10
       },
       {
         "region": "인천",
-        "postingCount": 1
+        "postingCount": 10
       },
       {
-        "region": "전북",
-        "postingCount": 1
+        "region": "대구",
+        "postingCount": 9
+      },
+      {
+        "region": "경남",
+        "postingCount": 6
+      },
+      {
+        "region": "광주",
+        "postingCount": 6
+      },
+      {
+        "region": "강원",
+        "postingCount": 4
       }
     ]
   },
   "userComparison": {
-    "dataBaseDate": "2026-06-20",
+    "dataBaseDate": "2026-06-21",
     "comparison": [
       {
         "stack": "Java",
         "userRatio": 40.0,
-        "marketRatio": 45.3,
-        "gap": -5.3
+        "marketRatio": 8.9,
+        "gap": 31.1
       },
       {
         "stack": "Spring",
         "userRatio": 35.0,
-        "marketRatio": 6.1,
-        "gap": 28.9
+        "marketRatio": 1.0,
+        "gap": 34.0
       },
       {
         "stack": "React",
         "userRatio": 20.0,
-        "marketRatio": 3.4,
-        "gap": 16.6
+        "marketRatio": 7.8,
+        "gap": 12.2
       },
       {
         "stack": "Python",
         "userRatio": 10.0,
-        "marketRatio": 15.5,
-        "gap": -5.5
+        "marketRatio": 10.7,
+        "gap": -0.7
       },
       {
         "stack": "Kubernetes",
         "userRatio": 5.0,
-        "marketRatio": 2.0,
-        "gap": 3.0
+        "marketRatio": 3.9,
+        "gap": 1.1
       }
     ]
   }

@@ -5,7 +5,9 @@
 형태로 집계한다.
 
 ```
-크롤링(requests+BeautifulSoup) → 태깅(pandas+dict) → 집계 → CSV / 프론트 JSON
+크롤링(requests+BeautifulSoup) → 태깅(pandas+dict) → 집계
+   → CSV / 프론트 JSON
+   → HDFS raw 적재존 + Oracle 시장 6테이블(ETL_RUNS 이력)
 ```
 
 ## 구조
@@ -16,7 +18,10 @@
 | `transform/enrich.py` | 스택/지역/직무/마감 태깅 (`data/dict/*.csv` 사용) |
 | `common/dates.py` | 사람인 마감 표기('~ 07/20(월)', '상시채용' 등) 파싱 |
 | `analyze/market.py` | DASH-04/05/06 집계 |
-| `run.py` | 오케스트레이터(누적 + 유효 공고 필터링) |
+| `config/settings.py` | `.env` 로드(Oracle/HDFS 접속 정보) |
+| `load/hdfs_writer.py` | 크롤링 원본을 HDFS raw 적재존(WebHDFS)에 적재 |
+| `load/oracle_loader.py` | Oracle 시장 6테이블 멱등 적재 + `ETL_RUNS` 이력 |
+| `run.py` | 오케스트레이터(누적 + 유효 공고 필터링 + 적재) |
 | `data/dict/` | 매핑 사전(tech_stack/region/position) |
 | `data/output/` | 산출 CSV |
 
@@ -33,6 +38,10 @@ python run.py --start-page 1 --end-page 5 --keywords 백엔드,프론트엔드,�
 - `--start-page` / `--end-page` 키워드당 수집할 페이지 구간(1-base, 둘 다 포함, 기본 1~1)
 - `--delay` 요청 간 지연 초(기본 1.5)
 - `--top` 집계 상위 N(기본 10)
+- `--skip-load` HDFS/Oracle 적재를 건너뛰고 CSV/프론트 JSON만 생성(개발용)
+
+> 적재(HDFS·Oracle) 접속 정보는 `etl/.env` 에서 읽는다. 점검:
+> `python -m config.settings` → `ORACLE_DSN` / `HDFS_WEBHDFS_URL` / `DATA_SOURCE` 출력.
 
 ### 페이지 구간을 나눠 수집하기
 
@@ -65,10 +74,29 @@ python run.py --start-page 16 --end-page 20 --keywords 백엔드,프론트엔드
 - `data/output/enriched_jobs.csv` — 태깅 + 마감 정보(누적)
 - `data/output/market_stack_trends.csv` — DASH-04 (유효 공고 기준)
 - `data/output/market_region_distribution.csv` — DASH-05 (유효 공고 기준)
-- `../frontend/src/mocks/data/market.json` — 프론트 대시보드 연동 데이터
+- `../frontend/src/mocks/data/market.json` — 프론트 MSW 연동 데이터
+- **HDFS** `{HDFS_ROOT}/raw/saramin/collected_date=YYYY-MM-DD/page_*.json` — 크롤링 원본(불변 적재존)
+- **Oracle** 시장 6테이블 — `MARKET_JOB_POSTINGS`/`MARKET_JOB_STACKS`(표준화 원천),
+  `ANALYTICS_MONTHLY_JOBS`/`ANALYTICS_STACK_TRENDS`/`ANALYTICS_REGION_JOBS`(집계),
+  `ETL_RUNS`(실행 이력)
 
-프론트는 MSW(`VITE_API_MOCKING=enabled`) 상태에서 `market.json`을 읽어
-DASH-04/05/06 차트에 실데이터를 렌더한다. 백엔드/Oracle은 사용하지 않는다.
+## 데이터 흐름과 소비처
+
+- **MSW(개발)**: `VITE_API_MOCKING=enabled` 상태에서 프론트가 `market.json`을 읽어
+  DASH-04/05/06 차트를 렌더.
+- **백엔드(실서빙)**: mocking을 끄면 프론트 `/api/market/*` 요청이 백엔드
+  `MarketController` → `ANALYTICS_STACK_TRENDS`/`ANALYTICS_REGION_JOBS`(Oracle)로 간다.
+  이 ETL이 두 테이블을 실데이터로 채우므로 **백엔드 코드 변경 없이** 실데이터가 노출된다.
+  (이전의 `AnalyticsSeeder` mock 시드는 제거됨 — ETL이 유일 소스.)
+- 집계의 센티넬 규약은 `db/schema.sql`·BE 엔티티와 동일하게 `position='ALL'`,
+  `region='ALL'`(STACK_TRENDS), `sigungu='ALL'`(REGION_JOBS, 시·도 합계)을 쓴다.
+
+### 멱등성
+
+- `MARKET_JOB_POSTINGS`: `(source, external_id)` 기준 MERGE(월 경계를 넘어 누적).
+- `MARKET_JOB_STACKS`: 해당 공고 기존 스택 DELETE 후 INSERT.
+- `ANALYTICS_*`: 이번 `base_month`의 `ALL` 스코프 행을 DELETE 후 INSERT(stale 행 방지).
+- 같은 인자로 재실행해도 행이 중복 증가하지 않고 최신 값으로 갱신된다.
 
 > DASH-06(내 지원 vs 시장)의 `userRatio`는 사용자 본인 지원 데이터라
 > 크롤링과 무관하다. `marketRatio`/`gap`만 실데이터로 갱신되고

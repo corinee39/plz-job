@@ -7,6 +7,7 @@ import re
 from datetime import date, timedelta
 
 _MD = re.compile(r"(\d{1,2})\s*/\s*(\d{1,2})")
+_YMD = re.compile(r"(\d{2})\s*/\s*(\d{1,2})\s*/\s*(\d{1,2})")
 
 
 def parse_deadline(raw: str, reference: date) -> date | None:
@@ -36,6 +37,22 @@ def parse_deadline(raw: str, reference: date) -> date | None:
     if candidate < reference - timedelta(days=180):
         candidate = candidate.replace(year=reference.year + 1)
     return candidate
+
+
+def parse_posted_date(raw: str) -> date | None:
+    """검색 결과 `.job_day` 텍스트('등록일 26/05/19' / '수정일 26/05/19',
+    YY/MM/DD) → 등록일. 형태가 다르거나 비어 있으면 None.
+    """
+    if not raw:
+        return None
+    m = _YMD.search(raw)
+    if not m:
+        return None
+    yy, month, day = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    try:
+        return date(2000 + yy, month, day)
+    except ValueError:
+        return None
 
 
 def is_open(deadline_date: date | None, today: date) -> bool:
