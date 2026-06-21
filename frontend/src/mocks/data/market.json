@@ -4,54 +4,54 @@
     "dataBaseDate": "2026-06-21",
     "trends": [
       {
-        "stack": "Python",
-        "postingCount": 77,
-        "ratio": 10.7
-      },
-      {
         "stack": "Java",
-        "postingCount": 64,
-        "ratio": 8.9
+        "postingCount": 306,
+        "ratio": 15.0
       },
       {
-        "stack": "AWS",
-        "postingCount": 59,
-        "ratio": 8.2
-      },
-      {
-        "stack": "React",
-        "postingCount": 56,
-        "ratio": 7.8
+        "stack": "Python",
+        "postingCount": 296,
+        "ratio": 14.5
       },
       {
         "stack": "JavaScript",
-        "postingCount": 44,
-        "ratio": 6.1
+        "postingCount": 149,
+        "ratio": 7.3
+      },
+      {
+        "stack": "AWS",
+        "postingCount": 149,
+        "ratio": 7.3
+      },
+      {
+        "stack": "React",
+        "postingCount": 144,
+        "ratio": 7.1
       },
       {
         "stack": "Docker",
-        "postingCount": 36,
-        "ratio": 5.0
-      },
-      {
-        "stack": "Kubernetes",
-        "postingCount": 28,
+        "postingCount": 80,
         "ratio": 3.9
       },
       {
         "stack": "MySQL",
-        "postingCount": 23,
-        "ratio": 3.2
+        "postingCount": 72,
+        "ratio": 3.5
+      },
+      {
+        "stack": "Kubernetes",
+        "postingCount": 72,
+        "ratio": 3.5
       },
       {
         "stack": "Git",
-        "postingCount": 13,
-        "ratio": 1.8
+        "postingCount": 50,
+        "ratio": 2.5
       },
       {
         "stack": "SQL",
-        "postingCount": 12,
-        "ratio": 1.7
+        "postingCount": 48,
+        "ratio": 2.4
       }
     ]
   },
@@ -60,43 +60,43 @@
     "regions": [
       {
         "region": "서울",
-        "postingCount": 462
+        "postingCount": 1337
       },
       {
         "region": "경기",
-        "postingCount": 153
+        "postingCount": 437
       },
       {
         "region": "부산",
-        "postingCount": 22
+        "postingCount": 60
       },
       {
         "region": "대전",
-        "postingCount": 17
-      },
-      {
-        "region": "경북",
-        "postingCount": 10
-      },
-      {
-        "region": "인천",
-        "postingCount": 10
+        "postingCount": 52
       },
       {
         "region": "대구",
-        "postingCount": 9
+        "postingCount": 30
       },
       {
-        "region": "경남",
-        "postingCount": 6
+        "region": "인천",
+        "postingCount": 28
       },
       {
         "region": "광주",
-        "postingCount": 6
+        "postingCount": 18
       },
       {
-        "region": "강원",
-        "postingCount": 4
+        "region": "경남",
+        "postingCount": 18
+      },
+      {
+        "region": "경북",
+        "postingCount": 14
+      },
+      {
+        "region": "전북",
+        "postingCount": 7
       }
     ]
   },
@@ -106,32 +106,32 @@
       {
         "stack": "Java",
         "userRatio": 40.0,
-        "marketRatio": 8.9,
-        "gap": 31.1
+        "marketRatio": 15.0,
+        "gap": 25.0
       },
       {
         "stack": "Spring",
         "userRatio": 35.0,
-        "marketRatio": 1.0,
-        "gap": 34.0
+        "marketRatio": 2.2,
+        "gap": 32.8
       },
       {
         "stack": "React",
         "userRatio": 20.0,
-        "marketRatio": 7.8,
-        "gap": 12.2
+        "marketRatio": 7.1,
+        "gap": 12.9
       },
       {
         "stack": "Python",
         "userRatio": 10.0,
-        "marketRatio": 10.7,
-        "gap": -0.7
+        "marketRatio": 14.5,
+        "gap": -4.5
       },
       {
         "stack": "Kubernetes",
         "userRatio": 5.0,
-        "marketRatio": 3.9,
-        "gap": 1.1
+        "marketRatio": 3.5,
+        "gap": 1.5
       }
     ]
   }
