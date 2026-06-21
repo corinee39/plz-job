@@ -341,9 +341,9 @@ export default function DashboardPage() {
         {reportMutation.data && (
           <div className="space-y-3">
             <div className="space-y-2">
-              <ReportSection label="핵심 변화" text={reportMutation.data.report.keyChanges} />
-              <ReportSection label="개인 vs 시장" text={reportMutation.data.report.userVsMarket} />
-              <ReportSection label="주의사항" text={reportMutation.data.report.cautions} />
+              <ReportSection label="핵심 변화" text={reportMutation.data.keyChanges} />
+              <ReportSection label="개인 vs 시장" text={reportMutation.data.userVsMarket} />
+              <ReportSection label="주의사항" text={reportMutation.data.cautions} />
             </div>
             <AiDisclaimerBadge text={reportMutation.data.disclaimer} />
           </div>
