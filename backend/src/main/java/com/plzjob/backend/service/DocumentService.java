@@ -108,6 +108,7 @@ public class DocumentService {
                 .orElseThrow(() -> new CustomException(ErrorCode.APPLICATION_NOT_FOUND));
         if (!app.getUser().getId().equals(userId)) throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         DocumentVersion v = findOwnedVersion(userId, versionId);
+        if (applicationDocumentRepository.existsByApplicationIdAndVersion(app.getId(), v)) return;
         applicationDocumentRepository.save(ApplicationDocument.builder().application(app).version(v).build());
     }
 

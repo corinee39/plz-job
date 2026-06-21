@@ -9,6 +9,7 @@ import com.plzjob.backend.dto.response.JobPostingListItem;
 import com.plzjob.backend.entity.*;
 import com.plzjob.backend.exception.CustomException;
 import com.plzjob.backend.exception.ErrorCode;
+import com.plzjob.backend.repository.ApplicationDocumentRepository;
 import com.plzjob.backend.repository.ApplicationRepository;
 import com.plzjob.backend.repository.JobPostingRepository;
 import com.plzjob.backend.repository.UserRepository;
@@ -26,6 +27,7 @@ public class JobPostingService {
     private final JobPostingPreviewClient previewClient;
     private final JobPostingRepository jobPostingRepository;
     private final ApplicationRepository applicationRepository;
+    private final ApplicationDocumentRepository applicationDocumentRepository;
     private final UserRepository userRepository;
 
     public JobPostingPreviewClient.PreviewResult preview(String url) {
@@ -69,7 +71,8 @@ public class JobPostingService {
     }
 
     public JobPostingDetailResponse getDetail(Long userId, Long jobPostingId) {
-        return JobPostingDetailResponse.from(findOwnedApplication(userId, jobPostingId));
+        Application app = findOwnedApplication(userId, jobPostingId);
+        return JobPostingDetailResponse.from(app, applicationDocumentRepository.findByApplicationId(app.getId()));
     }
 
     @Transactional

@@ -15,6 +15,7 @@ public class DocumentVersionResponse {
     private String mimeType;
     private Long sizeBytes;
     private String extractStatus;
+    private boolean hasExtractedText;
     private int extractedTextLength;
     private LocalDateTime createdAt;
 
@@ -23,7 +24,8 @@ public class DocumentVersionResponse {
         return DocumentVersionResponse.builder()
                 .versionId(v.getId()).versionName(v.getVersionName()).description(v.getDescription())
                 .fileName(v.getOriginalName()).mimeType(v.getMimeType()).sizeBytes(v.getSizeBytes())
-                .extractStatus(len > 0 ? "SUCCESS" : "FAILED").extractedTextLength(len)
+                .extractStatus(len > 0 ? "SUCCESS" : "FAILED").hasExtractedText(len > 0)
+                .extractedTextLength(len)
                 .createdAt(v.getCreatedAt())
                 .build();
     }
