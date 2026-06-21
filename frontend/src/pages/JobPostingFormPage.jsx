@@ -28,17 +28,18 @@ export default function JobPostingFormPage() {
   const preview = useMutation({
     mutationFn: () => previewJobPosting(urlInput),
     onSuccess: (data) => {
-      const ex = data.extracted ?? {};
+      // 백엔드 PreviewResult 평면 구조 전체 반영 (CRAWL-01~07)
       setForm((f) => ({
         ...f,
         url: data.sourceUrl ?? urlInput,
-        companyName: ex.companyName ?? f.companyName,
-        title: ex.title ?? f.title,
-        position: ex.position ?? f.position,
-        region: ex.region ?? f.region,
-        startDate: ex.startDate ?? f.startDate,
-        deadline: ex.deadline ?? f.deadline,
-        techStacks: ex.techStacks ? ex.techStacks.join(", ") : f.techStacks,
+        companyName: data.companyName ?? f.companyName,
+        title: data.title ?? f.title,
+        position: data.position ?? f.position,
+        region: data.region ?? f.region,
+        startDate: data.startDate ?? f.startDate,
+        deadline: data.deadline ?? f.deadline,
+        techStacks: data.techStacks?.length ? data.techStacks.join(", ") : f.techStacks,
+        description: data.description ?? f.description,
       }));
       setExtractInfo({ status: data.extractStatus, missing: data.missingFields ?? [] });
     },

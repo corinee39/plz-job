@@ -1,10 +1,15 @@
 import { apiClient } from "../../lib/api/client";
 
 // AI-02·03·04·06 — 공고 + 문서 버전 텍스트로 예상 면접 질문 생성
-export async function generateInterviewQuestions(applicationId, { documentVersionId, regenerate = false }) {
+// includeRetrospectives: 지난 회고(약점)를 프롬프트에 반영하도록 백엔드에 요청(선택, 추가 필드).
+export async function generateInterviewQuestions(
+  applicationId,
+  { documentVersionId, regenerate = false, includeRetrospectives = false }
+) {
   return apiClient.post(`/ai/applications/${applicationId}/interview-questions`, {
     documentVersionId,
     regenerate,
+    includeRetrospectives,
   });
 }
 

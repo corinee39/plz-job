@@ -20,15 +20,21 @@ const OAUTH_PROVIDERS = [
 export default function LoginPage() {
   const [params] = useSearchParams();
   const [loadingProvider, setLoadingProvider] = useState(null);
-  const error = params.get("error");
+  // 콜백 실패(?error=)와 로그인 시작 요청 실패를 함께 표시한다.
+  const [startFailed, setStartFailed] = useState(false);
+  const error = params.get("error") || startFailed;
 
   // AUTH-01: 백엔드에서 authorizationUrl(JSON)을 받아 이동 (302 직접 이동 방식 아님)
   async function handleLogin(provider) {
+    setStartFailed(false);
     setLoadingProvider(provider);
     try {
       const { authorizationUrl } = await getOAuthUrl(provider);
-      window.location.href = authorizationUrl;
-    } catch {
+      window.location.assign(authorizationUrl);
+    } catch (e) {
+      // 백엔드 5xx 등으로 인가 URL 발급이 실패하면 버튼이 "죽은 듯" 보이지 않게 알린다.
+      console.error("OAuth 로그인 시작 실패:", e);
+      setStartFailed(true);
       setLoadingProvider(null);
     }
   }

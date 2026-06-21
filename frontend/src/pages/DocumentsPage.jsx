@@ -84,10 +84,13 @@ export default function DocumentsPage() {
                         <Chip>{DOCUMENT_TYPE_LABELS[d.documentType] ?? d.documentType}</Chip>
                         <span className="font-medium truncate">{d.title}</span>
                       </span>
-                      <span className="mt-1 block text-xs text-zinc-400">
-                        버전 {d.versionCount}개
-                        {d.latestVersionName ? ` · 최신 ${d.latestVersionName}` : " · 업로드 전"}
-                      </span>
+                      {/* 백엔드 목록 DTO는 documentId·documentType·title 만 반환 → 버전 요약이 올 때만 표시 */}
+                      {d.versionCount != null && (
+                        <span className="mt-1 block text-xs text-zinc-400">
+                          버전 {d.versionCount}개
+                          {d.latestVersionName ? ` · 최신 ${d.latestVersionName}` : " · 업로드 전"}
+                        </span>
+                      )}
                     </button>
                   </li>
                 ))}
@@ -266,7 +269,7 @@ function VersionPanel({ documentId, detail }) {
                     <span className="truncate text-zinc-500">{v.fileName}</span>
                   </div>
                   <p className="text-xs text-zinc-400">
-                    {formatBytes(v.sizeBytes)} · 텍스트 추출 {v.hasExtractedText ? "○" : "✕"}
+                    {formatBytes(v.sizeBytes)} · 텍스트 추출 {v.extractStatus === "SUCCESS" ? "○" : "✕"}
                     {v.createdAt && ` · ${new Date(v.createdAt).toLocaleDateString("ko-KR")}`}
                   </p>
                   {v.description && (
@@ -330,7 +333,7 @@ function CreateDocForm({ onCreate, pending }) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="백엔드 이력서"
           required
-          className={`flex-1 ${inputCls}`}
+          className={`flex-1 min-w-0 ${inputCls}`}
         />
       </div>
       <button

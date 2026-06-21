@@ -6,13 +6,30 @@ import { mockJobPostings, mockSubmittedDocs } from "../state.js";
 const mockHistories = {};
 
 export const jobHandlers = [
-  // 공고 목록 (JOB-05)
-  http.get("/api/job-postings", () =>
-    ok({ content: mockJobPostings, totalElements: mockJobPostings.length, totalPages: 1, page: 0 })
+  // 공고 목록 (JOB-05) — API 명세서 §4.2: currentStage / applicationId 포함
+  http.get("*/api/job-postings", () =>
+    ok({
+      content: mockJobPostings.map((j) => ({
+        jobPostingId: j.jobPostingId,
+        applicationId: j.jobPostingId + 1000,
+        companyName: j.companyName,
+        title: j.title,
+        position: j.position ?? null,
+        region: j.region ?? null,
+        deadline: j.deadline ?? null,
+        currentStage: j.currentStage,
+        finalResult: "IN_PROGRESS",
+        favorite: false,
+      })),
+      totalElements: mockJobPostings.length,
+      totalPages: 1,
+      page: 0,
+      size: 20,
+    })
   ),
 
   // 공고 자동 입력 미리보기 (JOB-01, CRAWL-01~06)
-  http.post("/api/job-postings/preview", async ({ request }) => {
+  http.post("*/api/job-postings/preview", async ({ request }) => {
     const { url } = await request.json();
 
     if (!url || url.includes("localhost") || url.startsWith("file:")) {
@@ -39,7 +56,7 @@ export const jobHandlers = [
   }),
 
   // 공고 등록 (JOB-02·03·04·09)
-  http.post("/api/job-postings", async ({ request }) => {
+  http.post("*/api/job-postings", async ({ request }) => {
     const body = await request.json();
 
     if (!body.companyName || !body.title) {
@@ -67,7 +84,7 @@ export const jobHandlers = [
       position: body.position ?? null,
       deadline: body.deadline ?? null,
       url: body.url ?? null,
-      stage: body.initialStage ?? "INTERESTED",
+      currentStage: body.initialStage ?? "INTERESTED",
     });
 
     return HttpResponse.json(
@@ -77,7 +94,7 @@ export const jobHandlers = [
   }),
 
   // 공고 상세 (JOB-06)
-  http.get("/api/job-postings/:id", ({ params }) => {
+  http.get("*/api/job-postings/:id", ({ params }) => {
     const job = mockJobPostings.find((j) => j.jobPostingId === Number(params.id));
     if (!job) {
       return HttpResponse.json(
@@ -89,7 +106,6 @@ export const jobHandlers = [
     return ok({
       ...job,
       applicationId: appId,
-      currentStage: job.stage,
       finalResult: "IN_PROGRESS",
       techStacks: job.techStacks ?? ["Java", "Spring Boot"],
       description: job.description ?? null,
@@ -99,12 +115,12 @@ export const jobHandlers = [
   }),
 
   // 공고 단계 변경 (JOB-07) — PUT /applications/:applicationId/stage
-  http.put("/api/applications/:applicationId/stage", async ({ params, request }) => {
+  http.put("*/api/applications/:applicationId/stage", async ({ params, request }) => {
     const body = await request.json();
     const appId = Number(params.applicationId);
     const job = mockJobPostings.find((j) => j.jobPostingId + 1000 === appId);
-    const prevStage = job?.stage ?? null;
-    if (job) job.stage = body.toStage;
+    const prevStage = job?.currentStage ?? null;
+    if (job) job.currentStage = body.toStage;
 
     if (!mockHistories[appId]) mockHistories[appId] = [];
     mockHistories[appId].push({
@@ -119,7 +135,7 @@ export const jobHandlers = [
   }),
 
   // 단계 이력 조회
-  http.get("/api/applications/:applicationId/stage-histories", ({ params }) => {
+  http.get("*/api/applications/:applicationId/stage-histories", ({ params }) => {
     const appId = Number(params.applicationId);
     const job = mockJobPostings.find((j) => j.jobPostingId + 1000 === appId);
     const histories = mockHistories[appId] ?? [];
@@ -127,7 +143,7 @@ export const jobHandlers = [
       histories.push({
         historyId: 1,
         fromStage: null,
-        toStage: job.stage ?? "INTERESTED",
+        toStage: job.currentStage ?? "INTERESTED",
         memo: null,
         changedAt: new Date(Date.now() - 86400000).toISOString(),
       });

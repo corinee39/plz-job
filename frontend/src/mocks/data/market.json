@@ -1,0 +1,130 @@
+{
+  "dataBaseDate": "2026-06-20",
+  "stackTrends": {
+    "dataBaseDate": "2026-06-20",
+    "trends": [
+      {
+        "stack": "Java",
+        "postingCount": 67,
+        "ratio": 45.3
+      },
+      {
+        "stack": "JavaScript",
+        "postingCount": 27,
+        "ratio": 18.2
+      },
+      {
+        "stack": "Python",
+        "postingCount": 23,
+        "ratio": 15.5
+      },
+      {
+        "stack": "AWS",
+        "postingCount": 18,
+        "ratio": 12.2
+      },
+      {
+        "stack": "Node.js",
+        "postingCount": 10,
+        "ratio": 6.8
+      },
+      {
+        "stack": "Git",
+        "postingCount": 10,
+        "ratio": 6.8
+      },
+      {
+        "stack": "MySQL",
+        "postingCount": 9,
+        "ratio": 6.1
+      },
+      {
+        "stack": "Spring",
+        "postingCount": 9,
+        "ratio": 6.1
+      },
+      {
+        "stack": "Spring Boot",
+        "postingCount": 8,
+        "ratio": 5.4
+      },
+      {
+        "stack": "PHP",
+        "postingCount": 6,
+        "ratio": 4.1
+      }
+    ]
+  },
+  "regionDistribution": {
+    "dataBaseDate": "2026-06-20",
+    "regions": [
+      {
+        "region": "서울",
+        "postingCount": 96
+      },
+      {
+        "region": "경기",
+        "postingCount": 32
+      },
+      {
+        "region": "부산",
+        "postingCount": 7
+      },
+      {
+        "region": "대구",
+        "postingCount": 6
+      },
+      {
+        "region": "대전",
+        "postingCount": 3
+      },
+      {
+        "region": "경남",
+        "postingCount": 2
+      },
+      {
+        "region": "인천",
+        "postingCount": 1
+      },
+      {
+        "region": "전북",
+        "postingCount": 1
+      }
+    ]
+  },
+  "userComparison": {
+    "dataBaseDate": "2026-06-20",
+    "comparison": [
+      {
+        "stack": "Java",
+        "userRatio": 40.0,
+        "marketRatio": 45.3,
+        "gap": -5.3
+      },
+      {
+        "stack": "Spring",
+        "userRatio": 35.0,
+        "marketRatio": 6.1,
+        "gap": 28.9
+      },
+      {
+        "stack": "React",
+        "userRatio": 20.0,
+        "marketRatio": 3.4,
+        "gap": 16.6
+      },
+      {
+        "stack": "Python",
+        "userRatio": 10.0,
+        "marketRatio": 15.5,
+        "gap": -5.5
+      },
+      {
+        "stack": "Kubernetes",
+        "userRatio": 5.0,
+        "marketRatio": 2.0,
+        "gap": 3.0
+      }
+    ]
+  }
+}

@@ -12,6 +12,9 @@ import {
 } from "../features/jobPostings/api";
 import { getSchedules, createSchedule, deleteSchedule } from "../features/schedules/api";
 import { getDocuments, getDocument, linkVersionToApplication } from "../features/documents/api";
+import { useCurrentUser } from "../features/auth/hooks";
+import { DdayBadge } from "../components/common/DdayBadge";
+import { stackMatch } from "../lib/jobMetrics";
 import { STAGE_CODES, SCHEDULE_TYPE_LABELS, DOCUMENT_TYPE_LABELS } from "../constants/stageCodes";
 
 const SCHEDULE_TYPE_COLORS = {
@@ -77,7 +80,10 @@ export default function JobPostingDetailPage() {
         <div className="flex flex-wrap gap-2 items-center">
           <StageBadge code={j.currentStage} />
           {j.deadline && (
-            <span className="text-xs text-zinc-500">마감 {j.deadline}</span>
+            <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+              마감 {j.deadline}
+              <DdayBadge deadline={j.deadline} />
+            </span>
           )}
           {j.url && (
             <a
@@ -108,6 +114,9 @@ export default function JobPostingDetailPage() {
           </p>
         )}
       </div>
+
+      {/* 기술 스택 매칭/갭 (§13.5) */}
+      <StackMatchSection jobStacks={j.techStacks ?? []} />
 
       {/* 단계 변경 */}
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
@@ -228,6 +237,80 @@ export default function JobPostingDetailPage() {
   );
 }
 
+// §13.5 — 내 보유 스택(프로필)과 공고 요구 스택의 일치율·갭을 보여준다.
+function StackMatchSection({ jobStacks }) {
+  const { data: user } = useCurrentUser();
+
+  if (jobStacks.length === 0) return null;
+
+  const { matched, missing, rate } = stackMatch(user?.techStacks ?? [], jobStacks);
+  const hasProfile = (user?.techStacks ?? []).length > 0;
+
+  return (
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">기술 스택 매칭</h2>
+        {hasProfile && (
+          <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+            일치율 {rate}%
+          </span>
+        )}
+      </div>
+
+      {!hasProfile ? (
+        <p className="text-xs text-zinc-500">
+          <Link to="/profile" className="text-blue-600 dark:text-blue-400 hover:underline">
+            프로필
+          </Link>
+          에 보유 기술 스택을 등록하면 이 공고와의 일치율을 확인할 수 있습니다.
+        </p>
+      ) : (
+        <>
+          {/* 일치율 막대 */}
+          <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all"
+              style={{ width: `${rate}%` }}
+            />
+          </div>
+
+          {matched.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs text-zinc-500">보유 중 ({matched.length})</p>
+              <div className="flex flex-wrap gap-1">
+                {matched.map((s) => (
+                  <span
+                    key={s}
+                    className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                  >
+                    ✓ {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {missing.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs text-zinc-500">보강 필요 ({missing.length})</p>
+              <div className="flex flex-wrap gap-1">
+                {missing.map((s) => (
+                  <span
+                    key={s}
+                    className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function SubmittedDocumentsSection({ appId, jobPostingId, submittedDocuments }) {
   const qc = useQueryClient();
   const [docId, setDocId] = useState("");
@@ -318,14 +401,14 @@ function SubmittedDocumentsSection({ appId, jobPostingId, submittedDocuments }) 
   );
 }
 
+// PROC-01·02 — 일정 섹션 (§4.4: startAt, memo — scheduledAt·location·notes 미사용)
 function ScheduleSection({ appId }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     scheduleType: "INTERVIEW",
-    scheduledAt: "",
-    location: "",
-    notes: "",
+    startAt: "",
+    memo: "",
   });
 
   const { data: schedules = [], isLoading } = useQuery({
@@ -340,7 +423,7 @@ function ScheduleSection({ appId }) {
       qc.invalidateQueries({ queryKey: ["schedules", appId] });
       qc.invalidateQueries({ queryKey: ["schedules"] });
       setShowForm(false);
-      setForm({ scheduleType: "INTERVIEW", scheduledAt: "", location: "", notes: "" });
+      setForm({ scheduleType: "INTERVIEW", startAt: "", memo: "" });
     },
     onError: (err) => alert(err?.message ?? "일정 등록에 실패했습니다."),
   });
@@ -380,31 +463,25 @@ function ScheduleSection({ appId }) {
             </select>
             <input
               type="datetime-local"
-              value={form.scheduledAt}
-              onChange={set("scheduledAt")}
+              value={form.startAt}
+              onChange={set("startAt")}
               required
               className={inputCls}
             />
           </div>
           <input
-            placeholder="장소 (선택)"
-            value={form.location}
-            onChange={set("location")}
-            className={`w-full ${inputCls}`}
-          />
-          <input
             placeholder="메모 (선택)"
-            value={form.notes}
-            onChange={set("notes")}
+            value={form.memo}
+            onChange={set("memo")}
             className={`w-full ${inputCls}`}
           />
           <button
-            disabled={!form.scheduledAt || createMutation.isPending}
+            disabled={!form.startAt || createMutation.isPending}
             onClick={() =>
               createMutation.mutate({
-                ...form,
-                location: form.location || null,
-                notes: form.notes || null,
+                scheduleType: form.scheduleType,
+                startAt: form.startAt,
+                memo: form.memo || null,
               })
             }
             className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-3 py-1.5 text-xs text-white dark:text-zinc-900 disabled:opacity-40"
@@ -432,7 +509,7 @@ function ScheduleSection({ appId }) {
                     {SCHEDULE_TYPE_LABELS[s.scheduleType] ?? s.scheduleType}
                   </span>
                   <span className="text-xs text-zinc-500">
-                    {new Date(s.scheduledAt).toLocaleString("ko-KR", {
+                    {new Date(s.startAt).toLocaleString("ko-KR", {
                       month: "numeric",
                       day: "numeric",
                       weekday: "short",
@@ -441,10 +518,8 @@ function ScheduleSection({ appId }) {
                     })}
                   </span>
                 </div>
-                {(s.location || s.notes) && (
-                  <p className="text-xs text-zinc-400">
-                    {[s.location, s.notes].filter(Boolean).join(" · ")}
-                  </p>
+                {s.memo && (
+                  <p className="text-xs text-zinc-400">{s.memo}</p>
                 )}
               </div>
               <button

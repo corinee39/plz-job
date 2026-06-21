@@ -1,10 +1,4 @@
-requests          # API 호출
-pandas            # 표준화/집계
-numpy             # 적재 시 numpy 스칼라→파이썬 기본형 변환(load_oracle)
-openpyxl          # XLSX 읽기 (보유 파일 처리)
-pyarrow           # Parquet 저장
-oracledb          # Oracle 접속 (thin 모드 — Oracle Client 설치 불필요)
-python-dotenv     # .env 로드
-hdfs              # WebHDFS 클라이언트
-lxml              # XML 응답 파싱(잡알리오)
-pytest            # 변환/집계 테스트(3일차~)
+requests
+beautifulsoup4
+lxml
+pandas

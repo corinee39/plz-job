@@ -6,12 +6,12 @@ const mockAiGenerations = [];
 
 export const aiHandlers = [
   // AI-01 — Ollama 상태 확인
-  http.get("/api/ai/health", () =>
+  http.get("*/api/ai/health", () =>
     ok({ ollama: "UP", model: "gemma3:4b" })
   ),
 
   // AI-02·03·04·06 — 예상 면접질문 생성
-  http.post("/api/ai/applications/:applicationId/interview-questions", async ({ params, request }) => {
+  http.post("*/api/ai/applications/:applicationId/interview-questions", async ({ params, request }) => {
     const body = await request.json();
     const { documentVersionId } = body;
 
@@ -82,8 +82,24 @@ export const aiHandlers = [
     });
   }),
 
+  // AI-05·06 — 대시보드 리포트 해석
+  http.post("*/api/ai/dashboard-report", async () => {
+    return ok({
+      generationId: Date.now(),
+      report: {
+        keyChanges:
+          "최근 6개월 지원 건수가 꾸준히 증가했습니다. 특히 4~5월에 월 10건 이상을 유지하며 활발한 지원 활동을 보였습니다.",
+        userVsMarket:
+          "시장은 Python·Kubernetes 수요가 높지만 본인 지원 공고에서는 비중이 낮습니다. Java·Spring에 편중된 지원 패턴으로, 클라우드·인프라 분야 공고도 검토해 보시길 권장합니다.",
+        cautions:
+          "서류 통과율(60%)은 양호하나 최종 합격률(16.7%)이 낮습니다. 면접 준비에 집중하고, 표본 6건으로 비율 해석에 주의가 필요합니다.",
+      },
+      disclaimer: "AI가 생성한 분석이며 정확성을 보장하지 않습니다.",
+    });
+  }),
+
   // AI-09 — 생성 이력 조회
-  http.get("/api/ai/generations", ({ request }) => {
+  http.get("*/api/ai/generations", ({ request }) => {
     const url = new URL(request.url);
     const applicationId = url.searchParams.get("applicationId");
     const type = url.searchParams.get("type");
