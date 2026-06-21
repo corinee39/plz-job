@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
 import { PageShell } from "../components/layout/PageShell";
-import { previewJobPosting, createJobPosting } from "../features/jobPostings/api";
+import { usePreviewJobPosting, useCreateJobPosting } from "../features/jobPostings/hooks";
 import { STAGE_CODES } from "../constants/stageCodes";
 
 const EMPTY_FORM = {
@@ -25,55 +24,55 @@ export default function JobPostingFormPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [extractInfo, setExtractInfo] = useState(null); // { status, missing, note? }
 
-  const preview = useMutation({
-    mutationFn: () => previewJobPosting(urlInput),
-    onSuccess: (data) => {
-      // 백엔드 PreviewResult 평면 구조 전체 반영 (CRAWL-01~07)
-      setForm((f) => ({
-        ...f,
-        url: data.sourceUrl ?? urlInput,
-        companyName: data.companyName ?? f.companyName,
-        title: data.title ?? f.title,
-        position: data.position ?? f.position,
-        region: data.region ?? f.region,
-        deadline: data.deadline ?? f.deadline,
-        techStacks: data.techStacks?.length ? data.techStacks.join(", ") : f.techStacks,
-        description: data.description ?? f.description,
-      }));
-      setExtractInfo({ status: data.extractStatus, missing: data.missingFields ?? [] });
-    },
-    onError: (err) => {
-      // 추출 실패·차단이어도 수동 입력으로 진행 (JOB-04)
-      setForm((f) => ({ ...f, url: urlInput }));
-      setExtractInfo({ status: "FAILED", missing: [], note: err?.message });
-    },
+  const preview = usePreviewJobPosting();
+  const create = useCreateJobPosting();
+
+  const buildBody = (confirmDuplicate) => ({
+    ...form,
+    appliedAt: form.appliedAt || null,
+    deadline: form.deadline || null,
+    techStacks: form.techStacks
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+    confirmDuplicate,
   });
 
-  const save = useMutation({
-    mutationFn: (confirmDuplicate) =>
-      createJobPosting({
-        ...form,
-        appliedAt: form.appliedAt || null,
-        deadline: form.deadline || null,
-        techStacks: form.techStacks
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        confirmDuplicate,
-      }),
-    onSuccess: (data) => {
-      navigate(`/job-postings/${data.jobPostingId}`);
-    },
-    onError: (err) => {
-      if (err?.code === "DUPLICATE_JOB_URL") {
-        if (window.confirm("이미 등록한 URL입니다. 그래도 저장할까요?")) {
-          save.mutate(true);
+  const handlePreview = () =>
+    preview.mutate(urlInput, {
+      onSuccess: (data) => {
+        setForm((f) => ({
+          ...f,
+          url: data.sourceUrl ?? urlInput,
+          companyName: data.companyName ?? f.companyName,
+          title: data.title ?? f.title,
+          position: data.position ?? f.position,
+          region: data.region ?? f.region,
+          deadline: data.deadline ?? f.deadline,
+          techStacks: data.techStacks?.length ? data.techStacks.join(", ") : f.techStacks,
+          description: data.description ?? f.description,
+        }));
+        setExtractInfo({ status: data.extractStatus, missing: data.missingFields ?? [] });
+      },
+      onError: (err) => {
+        setForm((f) => ({ ...f, url: urlInput }));
+        setExtractInfo({ status: "FAILED", missing: [], note: err?.message });
+      },
+    });
+
+  const handleSave = (confirmDuplicate) =>
+    create.mutate(buildBody(confirmDuplicate), {
+      onSuccess: (data) => navigate(`/job-postings/${data.jobPostingId}`),
+      onError: (err) => {
+        if (err?.code === "DUPLICATE_JOB_URL") {
+          if (window.confirm("이미 등록한 URL입니다. 그래도 저장할까요?")) {
+            handleSave(true);
+          }
+        } else {
+          alert(err?.message ?? "저장에 실패했습니다.");
         }
-      } else {
-        alert(err?.message ?? "저장에 실패했습니다.");
-      }
-    },
-  });
+      },
+    });
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -93,7 +92,7 @@ export default function JobPostingFormPage() {
           <button
             type="button"
             disabled={!urlInput || preview.isPending}
-            onClick={() => preview.mutate()}
+            onClick={handlePreview}
             className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
           >
             {preview.isPending ? "불러오는 중…" : "자동으로 채우기"}
@@ -125,7 +124,7 @@ export default function JobPostingFormPage() {
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
-          save.mutate(false);
+          handleSave(false);
         }}
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -179,10 +178,10 @@ export default function JobPostingFormPage() {
           </button>
           <button
             type="submit"
-            disabled={save.isPending}
+            disabled={create.isPending}
             className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
           >
-            {save.isPending ? "저장 중…" : "등록"}
+            {create.isPending ? "저장 중…" : "등록"}
           </button>
         </div>
       </form>
