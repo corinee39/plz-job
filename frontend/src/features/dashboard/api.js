@@ -30,7 +30,7 @@ export function getRegionDistribution(params) {
   return apiClient.get("/market/region-distribution", { params });
 }
 
-// AI-05 — 대시보드 집계 기반 자연어 리포트 생성
+// AI-05 — 대시보드 집계 기반 자연어 리포트 생성 (LLM 응답 시간을 위해 타임아웃 120초)
 export function postDashboardReport(body) {
-  return apiClient.post("/ai/dashboard-report", body);
+  return apiClient.post("/ai/dashboard-report", body, { timeout: 120_000 });
 }
