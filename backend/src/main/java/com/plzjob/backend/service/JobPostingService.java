@@ -19,6 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -83,7 +85,7 @@ public class JobPostingService {
                 req.getDeadline(), req.getTechStacks(), req.getDescription());
         app.updateAppliedAt(req.getAppliedAt() != null ? req.getAppliedAt().atStartOfDay() : null);
         if (req.getFavorite() != null) p.toggleFavorite(req.getFavorite());
-        return JobPostingDetailResponse.from(app);
+        return JobPostingDetailResponse.from(app, submittedDocuments(app.getId()));
     }
 
     @Transactional

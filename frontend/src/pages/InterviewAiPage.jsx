@@ -83,7 +83,7 @@ export default function InterviewAiPage() {
     "rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm bg-transparent";
 
   const hasExtractedVersions = (docDetail.data?.versions ?? []).filter(
-    (v) => v.hasExtractedText
+    (v) => v.extractStatus === "SUCCESS"
   );
 
   return (

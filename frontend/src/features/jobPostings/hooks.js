@@ -15,7 +15,6 @@ export function useJobPostings(params) {
   return useQuery({
     queryKey: ["jobPostings", params],
     queryFn: () => getJobPostings(params),
-    keepPreviousData: true,
   });
 }
 
