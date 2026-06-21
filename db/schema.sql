@@ -22,19 +22,24 @@
 --------------------------------------------------------------------------------
 
 --==============================================================================
--- 0. (재생성용) DROP — 최초 생성 시에는 주석 유지. 재실행이 필요하면 주석 해제.
+-- 0. 전체 초기화(DROP ALL) — plzjob 스키마의 "모든" 테이블/시퀀스를 삭제한다.
+--    ⚠️ 이 블록을 실행하면 plzjob 계정의 데이터가 전부 사라진다. 새로 만들기
+--       직전에만 실행할 것(운영 DB 금지).
+--    · 고정 목록이 아니라 user_tables / user_sequences 전체를 순회하므로,
+--      Hibernate 가 ddl-auto 로 자동 생성한 임시 테이블(HTE_*)이나 그 외
+--      찌꺼기 객체까지 남김없이 정리된다.
+--    · CASCADE CONSTRAINTS = FK 의존성과 무관하게 삭제, PURGE = 휴지통도 비움.
+--    · 매 실행마다 drop 되는 게 싫으면 이 BEGIN..END 블록만 주석 처리하면 된다.
 --==============================================================================
 -- BEGIN
---   FOR t IN (SELECT table_name FROM user_tables WHERE table_name IN (
---     'AI_GENERATIONS','RETROSPECTIVES','RECRUITMENT_SCHEDULES','APPLICATION_DOCUMENTS',
---     'DOCUMENT_VERSIONS','DOCUMENTS','APPLICATION_STAGE_HISTORIES','APPLICATIONS',
---     'JOB_POSTINGS','USERS','MARKET_JOB_STACKS','MARKET_JOB_POSTINGS',
---     'ANALYTICS_MONTHLY_JOBS','ANALYTICS_STACK_TRENDS','ANALYTICS_REGION_JOBS','ETL_RUNS'))
---   LOOP EXECUTE IMMEDIATE 'DROP TABLE '||t.table_name||' CASCADE CONSTRAINTS PURGE'; END LOOP;
---   FOR s IN (SELECT sequence_name FROM user_sequences WHERE sequence_name LIKE 'SEQ_%')
---   LOOP EXECUTE IMMEDIATE 'DROP SEQUENCE '||s.sequence_name; END LOOP;
+--   FOR t IN (SELECT table_name FROM user_tables) LOOP
+--     EXECUTE IMMEDIATE 'DROP TABLE "'||t.table_name||'" CASCADE CONSTRAINTS PURGE';
+--   END LOOP;
+--   FOR s IN (SELECT sequence_name FROM user_sequences) LOOP
+--     EXECUTE IMMEDIATE 'DROP SEQUENCE "'||s.sequence_name||'"';
+--   END LOOP;
 -- END;
--- /
+
 
 --==============================================================================
 -- 1. 시퀀스

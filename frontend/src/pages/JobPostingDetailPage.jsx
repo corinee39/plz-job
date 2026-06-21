@@ -79,6 +79,9 @@ export default function JobPostingDetailPage() {
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
         <div className="flex flex-wrap gap-2 items-center">
           <StageBadge code={j.currentStage} />
+          {j.appliedAt && (
+            <span className="text-xs text-zinc-500">지원일 {j.appliedAt}</span>
+          )}
           {j.deadline && (
             <span className="flex items-center gap-1.5 text-xs text-zinc-500">
               마감 {j.deadline}

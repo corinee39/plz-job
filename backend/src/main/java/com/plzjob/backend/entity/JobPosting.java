@@ -74,12 +74,11 @@ public class JobPosting extends BaseEntity {
     }
 
     public void update(String companyName, String title, String position, String region,
-                       LocalDate startDate, LocalDate deadline, List<String> techStacks, String description) {
+                       LocalDate deadline, List<String> techStacks, String description) {
         if (companyName != null) this.companyName = companyName;
         if (title != null) this.title = title;
         if (position != null) this.position = position;
         if (region != null) this.region = region;
-        if (startDate != null) this.startDate = startDate;
         if (deadline != null) this.deadline = deadline;
         if (techStacks != null) this.techStacks = techStacks;
         if (description != null) this.description = description;

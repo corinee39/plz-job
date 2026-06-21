@@ -46,12 +46,11 @@ export const jobHandlers = [
         title: "백엔드 개발자 (경력 2년 이상)",
         position: "백엔드",
         region: "서울 강남구",
-        startDate: "2026-06-01",
         deadline: "2026-07-15",
         techStacks: ["Java", "Spring Boot", "Oracle"],
       },
-      extractStatus: "PARTIAL",
-      missingFields: ["startDate"],
+      extractStatus: "SUCCESS",
+      missingFields: [],
     });
   }),
 
@@ -84,6 +83,7 @@ export const jobHandlers = [
       position: body.position ?? null,
       deadline: body.deadline ?? null,
       url: body.url ?? null,
+      appliedAt: body.appliedAt ?? null,
       currentStage: body.initialStage ?? "INTERESTED",
     });
 
@@ -109,7 +109,7 @@ export const jobHandlers = [
       finalResult: "IN_PROGRESS",
       techStacks: job.techStacks ?? ["Java", "Spring Boot"],
       description: job.description ?? null,
-      startDate: job.startDate ?? null,
+      appliedAt: job.appliedAt ?? null,
       submittedDocuments: mockSubmittedDocs[appId] ?? [],
     });
   }),
@@ -144,7 +144,7 @@ export const jobHandlers = [
       );
     }
     const body = await request.json();
-    const updatable = ["companyName", "title", "deadline", "region", "position", "techStacks", "description", "startDate"];
+    const updatable = ["companyName", "title", "deadline", "region", "position", "techStacks", "description", "appliedAt"];
     updatable.forEach((k) => { if (k in body) job[k] = body[k]; });
     return ok({ ...job, applicationId: job.jobPostingId + 1000 });
   }),

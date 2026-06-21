@@ -45,12 +45,16 @@ public class Application extends BaseEntity {
     private List<ApplicationStageHistory> histories = new ArrayList<>();
 
     @Builder
-    public Application(JobPosting jobPosting, User user, ApplicationStage initialStage) {
+    public Application(JobPosting jobPosting, User user, ApplicationStage initialStage,
+                       LocalDateTime appliedAt) {
         this.jobPosting = jobPosting;
         this.user = user;
         this.currentStage = initialStage != null ? initialStage : ApplicationStage.INTERESTED;
         this.finalResult = FinalResult.IN_PROGRESS;
-        if (this.currentStage.ordinal() >= ApplicationStage.APPLIED.ordinal()
+        if (appliedAt != null) {
+            // 등록 폼에서 사용자가 입력한 지원일을 우선 사용
+            this.appliedAt = appliedAt;
+        } else if (this.currentStage.ordinal() >= ApplicationStage.APPLIED.ordinal()
                 && this.currentStage != ApplicationStage.WITHDRAWN) {
             this.appliedAt = LocalDateTime.now();
         }
@@ -72,5 +76,10 @@ public class Application extends BaseEntity {
                 .application(this).fromStage(from).toStage(to).memo(memo).build();
         this.histories.add(history);
         return history;
+    }
+
+    /** 공고 수정 시 사용자가 입력한 지원일 갱신(null이면 기존 값 유지). */
+    public void updateAppliedAt(LocalDateTime appliedAt) {
+        if (appliedAt != null) this.appliedAt = appliedAt;
     }
 }

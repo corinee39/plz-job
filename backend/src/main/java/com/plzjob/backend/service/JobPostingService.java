@@ -50,6 +50,7 @@ public class JobPostingService {
 
         Application app = applicationRepository.save(Application.builder()
                 .jobPosting(posting).user(user).initialStage(req.getInitialStage())
+                .appliedAt(req.getAppliedAt() != null ? req.getAppliedAt().atStartOfDay() : null)
                 .build());
 
         return JobPostingCreateResponse.builder()
@@ -76,7 +77,8 @@ public class JobPostingService {
         Application app = findOwnedApplication(userId, jobPostingId);
         JobPosting p = app.getJobPosting();
         p.update(req.getCompanyName(), req.getTitle(), req.getPosition(), req.getRegion(),
-                req.getStartDate(), req.getDeadline(), req.getTechStacks(), req.getDescription());
+                req.getDeadline(), req.getTechStacks(), req.getDescription());
+        app.updateAppliedAt(req.getAppliedAt() != null ? req.getAppliedAt().atStartOfDay() : null);
         if (req.getFavorite() != null) p.toggleFavorite(req.getFavorite());
         return JobPostingDetailResponse.from(app);
     }

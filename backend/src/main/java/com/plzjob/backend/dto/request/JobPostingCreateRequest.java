@@ -20,5 +20,6 @@ public class JobPostingCreateRequest {
     private List<String> techStacks;
     private String description;
     private ApplicationStage initialStage;
+    private LocalDate appliedAt;   // 지원일(APPLICATIONS.applied_at). 등록 폼의 '시작일' 입력을 대체.
     private boolean confirmDuplicate;
 }

@@ -11,7 +11,7 @@ const EMPTY_FORM = {
   url: "",
   position: "",
   region: "",
-  startDate: "",
+  appliedAt: "",
   deadline: "",
   techStacks: "",
   description: "",
@@ -36,7 +36,6 @@ export default function JobPostingFormPage() {
         title: data.title ?? f.title,
         position: data.position ?? f.position,
         region: data.region ?? f.region,
-        startDate: data.startDate ?? f.startDate,
         deadline: data.deadline ?? f.deadline,
         techStacks: data.techStacks?.length ? data.techStacks.join(", ") : f.techStacks,
         description: data.description ?? f.description,
@@ -54,7 +53,7 @@ export default function JobPostingFormPage() {
     mutationFn: (confirmDuplicate) =>
       createJobPosting({
         ...form,
-        startDate: form.startDate || null,
+        appliedAt: form.appliedAt || null,
         deadline: form.deadline || null,
         techStacks: form.techStacks
           .split(",")
@@ -134,7 +133,7 @@ export default function JobPostingFormPage() {
           <Field label="공고명 *" required value={form.title} onChange={set("title")} />
           <Field label="직무" value={form.position} onChange={set("position")} placeholder="백엔드" />
           <Field label="지역" value={form.region} onChange={set("region")} placeholder="서울 강남구" />
-          <Field label="시작일" type="date" value={form.startDate} onChange={set("startDate")} />
+          <Field label="지원일" type="date" value={form.appliedAt} onChange={set("appliedAt")} />
           <Field label="마감일" type="date" value={form.deadline} onChange={set("deadline")} />
         </div>
 

@@ -12,7 +12,7 @@ public class JobPostingUpdateRequest {
     private String title;
     private String position;
     private String region;
-    private LocalDate startDate;
+    private LocalDate appliedAt;   // 지원일(APPLICATIONS.applied_at). 기존 startDate 입력을 대체.
     private LocalDate deadline;
     private List<String> techStacks;
     private String description;

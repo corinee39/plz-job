@@ -16,7 +16,7 @@ public class JobPostingDetailResponse {
     private String url;
     private String position;
     private String region;
-    private LocalDate startDate;
+    private LocalDate appliedAt;   // 지원일(APPLICATIONS.applied_at). 기존 startDate 표시를 대체.
     private LocalDate deadline;
     private List<String> techStacks;
     private String description;
@@ -30,7 +30,8 @@ public class JobPostingDetailResponse {
                 .jobPostingId(p.getId()).applicationId(a.getId())
                 .companyName(p.getCompanyName()).title(p.getTitle()).url(p.getUrl())
                 .position(p.getPosition()).region(p.getRegion())
-                .startDate(p.getStartDate()).deadline(p.getDeadline())
+                .appliedAt(a.getAppliedAt() != null ? a.getAppliedAt().toLocalDate() : null)
+                .deadline(p.getDeadline())
                 .techStacks(p.getTechStacks()).description(p.getDescription())
                 .currentStage(a.getCurrentStage().name()).finalResult(a.getFinalResult().name())
                 .favorite(p.isFavorite())
