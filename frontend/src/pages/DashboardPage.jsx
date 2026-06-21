@@ -362,9 +362,8 @@ function DeadlineWidget() {
   const upcoming = (data?.content ?? [])
     .filter((j) => j.deadline && isActiveStage(j.currentStage ?? j.stage))
     .map((j) => ({ ...j, days: daysUntil(j.deadline) }))
-    .filter((j) => j.days != null && j.days >= 0)
-    .sort((a, b) => a.days - b.days)
-    .slice(0, 5);
+    .filter((j) => j.days != null && j.days >= 0 && j.days <= 7)
+    .sort((a, b) => a.days - b.days);
 
   return (
     <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
@@ -382,7 +381,7 @@ function DeadlineWidget() {
       >
         {upcoming.length === 0 ? (
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            마감이 임박한 진행 중 공고가 없습니다.
+            7일 이내 마감 임박 공고가 없습니다.
           </p>
         ) : (
           <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
