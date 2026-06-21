@@ -23,8 +23,18 @@ public class JobPostingDetailResponse {
     private String currentStage;
     private String finalResult;
     private boolean favorite;
+    private List<SubmittedDocument> submittedDocuments;
 
-    public static JobPostingDetailResponse from(Application a) {
+    @Getter
+    @Builder
+    public static class SubmittedDocument {
+        private Long versionId;
+        private String versionName;
+        private String documentTitle;
+        private String documentType;
+    }
+
+    public static JobPostingDetailResponse from(Application a, List<SubmittedDocument> submittedDocuments) {
         var p = a.getJobPosting();
         return JobPostingDetailResponse.builder()
                 .jobPostingId(p.getId()).applicationId(a.getId())
@@ -35,6 +45,7 @@ public class JobPostingDetailResponse {
                 .techStacks(p.getTechStacks()).description(p.getDescription())
                 .currentStage(a.getCurrentStage().name()).finalResult(a.getFinalResult().name())
                 .favorite(p.isFavorite())
+                .submittedDocuments(submittedDocuments)
                 .build();
     }
 }

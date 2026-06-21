@@ -108,6 +108,8 @@ public class DocumentService {
                 .orElseThrow(() -> new CustomException(ErrorCode.APPLICATION_NOT_FOUND));
         if (!app.getUser().getId().equals(userId)) throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         DocumentVersion v = findOwnedVersion(userId, versionId);
+        // 이미 연결돼 있으면 멱등 처리(UNIQUE 제약 위반 → 500 방지)
+        if (applicationDocumentRepository.existsByApplication_IdAndVersion_Id(applicationId, versionId)) return;
         applicationDocumentRepository.save(ApplicationDocument.builder().application(app).version(v).build());
     }
 

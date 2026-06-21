@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface ApplicationDocumentRepository extends JpaRepository<ApplicationDocument, Long> {
     List<ApplicationDocument> findByApplicationId(Long applicationId);
+    boolean existsByApplication_IdAndVersion_Id(Long applicationId, Long versionId);
 }

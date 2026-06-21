@@ -9,6 +9,7 @@ import com.plzjob.backend.dto.response.JobPostingListItem;
 import com.plzjob.backend.entity.*;
 import com.plzjob.backend.exception.CustomException;
 import com.plzjob.backend.exception.ErrorCode;
+import com.plzjob.backend.repository.ApplicationDocumentRepository;
 import com.plzjob.backend.repository.ApplicationRepository;
 import com.plzjob.backend.repository.JobPostingRepository;
 import com.plzjob.backend.repository.UserRepository;
@@ -18,6 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -26,6 +29,7 @@ public class JobPostingService {
     private final JobPostingPreviewClient previewClient;
     private final JobPostingRepository jobPostingRepository;
     private final ApplicationRepository applicationRepository;
+    private final ApplicationDocumentRepository applicationDocumentRepository;
     private final UserRepository userRepository;
 
     public JobPostingPreviewClient.PreviewResult preview(String url) {
@@ -69,7 +73,23 @@ public class JobPostingService {
     }
 
     public JobPostingDetailResponse getDetail(Long userId, Long jobPostingId) {
-        return JobPostingDetailResponse.from(findOwnedApplication(userId, jobPostingId));
+        Application app = findOwnedApplication(userId, jobPostingId);
+        return JobPostingDetailResponse.from(app, submittedDocuments(app.getId()));
+    }
+
+    /** 지원에 연결된 제출 문서(버전) 목록. */
+    private List<JobPostingDetailResponse.SubmittedDocument> submittedDocuments(Long applicationId) {
+        return applicationDocumentRepository.findByApplicationId(applicationId).stream()
+                .map(ad -> {
+                    var v = ad.getVersion();
+                    return JobPostingDetailResponse.SubmittedDocument.builder()
+                            .versionId(v.getId())
+                            .versionName(v.getVersionName())
+                            .documentTitle(v.getDocument().getTitle())
+                            .documentType(v.getDocument().getDocumentType().name())
+                            .build();
+                })
+                .toList();
     }
 
     @Transactional
@@ -80,7 +100,7 @@ public class JobPostingService {
                 req.getDeadline(), req.getTechStacks(), req.getDescription());
         app.updateAppliedAt(req.getAppliedAt() != null ? req.getAppliedAt().atStartOfDay() : null);
         if (req.getFavorite() != null) p.toggleFavorite(req.getFavorite());
-        return JobPostingDetailResponse.from(app);
+        return JobPostingDetailResponse.from(app, submittedDocuments(app.getId()));
     }
 
     @Transactional
