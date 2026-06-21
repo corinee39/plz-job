@@ -1,6 +1,6 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, ResponsiveContainer,
+  ResponsiveContainer,
   FunnelChart, Funnel, LabelList, Cell,
   LineChart, Line,
 } from "recharts";
@@ -11,6 +11,7 @@ import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
 import { EmptyState } from "../components/common/EmptyState";
 import { AiDisclaimerBadge } from "../components/common/AiDisclaimerBadge";
 import { DdayBadge } from "../components/common/DdayBadge";
+import { BRAND, PeriodFilter, ChartCard } from "../components/dashboard/widgets";
 import { useJobPostings } from "../features/jobPostings/hooks";
 import { daysUntil, isActiveStage } from "../lib/jobMetrics";
 import { useFilterStore } from "../store/filterStore";
@@ -18,39 +19,11 @@ import {
   useDashboardSummary,
   useMonthlyApplications,
   useStageConversions,
-  useStackTrends,
-  useUserComparison,
-  useRegionDistribution,
   useDashboardReport,
 } from "../features/dashboard/hooks";
 
-// DASH-08: 필터 선택지
-const PERIOD_OPTIONS = [
-  { value: "1m", label: "1개월" },
-  { value: "3m", label: "3개월" },
-  { value: "6m", label: "6개월" },
-  { value: "1y", label: "1년" },
-];
-
-const POSITION_OPTIONS = [
-  { value: "", label: "전체 직무" },
-  { value: "백엔드", label: "백엔드" },
-  { value: "프론트엔드", label: "프론트엔드" },
-  { value: "풀스택", label: "풀스택" },
-  { value: "데이터", label: "데이터" },
-  { value: "AI", label: "AI" },
-  { value: "모바일", label: "모바일" },
-  { value: "DevOps", label: "DevOps" },
-];
-
-const REGION_OPTIONS = [
-  { value: "", label: "전체 지역" },
-  { value: "서울", label: "서울" },
-  { value: "경기", label: "경기" },
-  { value: "부산", label: "부산" },
-  { value: "대전", label: "대전" },
-  { value: "인천", label: "인천" },
-];
+// 마감 임박 기준일(D-day 상한). 이 일수 이내로 마감하는 진행 중 공고만 노출.
+const DEADLINE_SOON_DAYS = 5;
 
 // DASH-02·03 — 퍼널 단계 라벨
 const FUNNEL_LABELS = {
@@ -61,22 +34,16 @@ const FUNNEL_LABELS = {
   FINAL: "최종",
 };
 
-// 차트 색 — index.css @theme 토큰을 단일 출처로 참조("내 데이터=brand, 시장=market")
-const BRAND = "var(--color-brand)";
-const MARKET = "var(--color-market)";
 // 퍼널 단계별 brand 농도 그라데이션(위→아래로 옅어짐)
 const FUNNEL_COLORS = ["#4f46e5", "#6366f1", "#818cf8", "#a5b4fc", "#c7d2fe"];
 
-// UI-02: 대시보드 — DASH-01~09, AI-05
+// UI-02: 대시보드(지원 현황) — DASH-01·02·03, AI-05
 export default function DashboardPage() {
-  const { period, job, region, setPeriod, setJob, setRegion } = useFilterStore();
+  const { period, job, region } = useFilterStore();
 
   const summary = useDashboardSummary();
   const monthly = useMonthlyApplications();
   const stages = useStageConversions();
-  const stackTrends = useStackTrends();
-  const comparison = useUserComparison();
-  const regionDist = useRegionDistribution();
   const reportMutation = useDashboardReport();
 
   const monthlyData = (monthly.data?.monthly ?? []).map((m) => ({
@@ -88,37 +55,18 @@ export default function DashboardPage() {
     name: FUNNEL_LABELS[s.stage] ?? s.stage,
     fill: FUNNEL_COLORS[i % FUNNEL_COLORS.length],
   }));
-  const stackTrendsData = (stackTrends.data?.trends ?? []).slice(0, 6);
-  const comparisonData = (comparison.data?.comparison ?? []).slice(0, 6);
-  const regionData = (regionDist.data?.regions ?? []).slice(0, 5);
 
   const handleAiReport = () =>
     reportMutation.mutate({ period, position: job || undefined, region: region || undefined });
 
   return (
     <PageShell
-      title="대시보드"
-      description="지원 현황과 시장 데이터를 한눈에 확인합니다."
+      title="지원 현황"
+      description="내 지원 현황과 진행 상황을 한눈에 확인합니다."
     >
-      {/* DASH-08: 필터 바 */}
+      {/* DASH-08: 기간 필터 */}
       <div className="flex flex-wrap gap-2">
-        <div className="flex rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden text-xs">
-          {PERIOD_OPTIONS.map((o) => (
-            <button
-              key={o.value}
-              onClick={() => setPeriod(o.value)}
-              className={`px-3 py-1.5 transition-colors ${
-                period === o.value
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              }`}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-        <Select value={job} onChange={setJob} options={POSITION_OPTIONS} />
-        <Select value={region} onChange={setRegion} options={REGION_OPTIONS} />
+        <PeriodFilter />
       </div>
 
       {/* KPI 카드 */}
@@ -147,10 +95,10 @@ export default function DashboardPage() {
         )}
       </AsyncBoundary>
 
-      {/* 마감 임박 공고 (JOB-08) — 진행 중 공고를 마감일 순으로 */}
+      {/* 마감 임박 공고 (JOB-08) — 진행 중 공고를 마감일 순으로(D-5 이내) */}
       <DeadlineWidget />
 
-      {/* 차트 2×2 그리드 */}
+      {/* 차트 그리드 — 개인 지원 데이터(DASH-01·02·03) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* DASH-01: 월별 지원 추이 */}
         <ChartCard
@@ -168,7 +116,7 @@ export default function DashboardPage() {
               actionTo="/job-postings/new"
             />
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
@@ -196,7 +144,7 @@ export default function DashboardPage() {
               actionTo="/job-postings/new"
             />
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={300}>
               <FunnelChart margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
                 <Tooltip
                   formatter={(v, _name, props) => {
@@ -220,91 +168,6 @@ export default function DashboardPage() {
             <p className="mt-1 text-xs text-zinc-400">{stages.data.note}</p>
           )}
         </ChartCard>
-
-        {/* DASH-04: 시장 기술 스택 추세 */}
-        <ChartCard
-          title="시장 기술 스택 추세"
-          badge="DASH-04"
-          isLoading={stackTrends.isLoading}
-          isError={stackTrends.isError}
-          onRetry={stackTrends.refetch}
-        >
-          {stackTrendsData.length === 0 ? (
-            <EmptyState title="시장 데이터가 없습니다" />
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={stackTrendsData} layout="vertical" margin={{ top: 4, right: 48, left: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11 }} unit="%" />
-                <YAxis type="category" dataKey="stack" tick={{ fontSize: 11 }} width={72} />
-                <Tooltip
-                  formatter={(v, _name, props) => [
-                    `${v}% (${props.payload.postingCount?.toLocaleString()}건)`,
-                    "시장 비율",
-                  ]}
-                />
-                <Bar dataKey="ratio" fill={MARKET} radius={[0, 3, 3, 0]} name="시장 비율" />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-          {stackTrends.data?.dataBaseDate && (
-            <p className="mt-1 text-xs text-zinc-400">시장 데이터 기준일: {stackTrends.data.dataBaseDate}</p>
-          )}
-        </ChartCard>
-
-        {/* DASH-06: 개인 vs 시장 기술 스택 비교 */}
-        <ChartCard
-          title="기술 스택 비교 (내 지원 vs 시장)"
-          badge="DASH-06"
-          isLoading={comparison.isLoading}
-          isError={comparison.isError}
-          onRetry={comparison.refetch}
-        >
-          {comparisonData.length === 0 ? (
-            <EmptyState title="비교 데이터가 없습니다" />
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={comparisonData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-                <XAxis dataKey="stack" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 11 }} unit="%" />
-                <Tooltip formatter={(v) => [`${v}%`]} />
-                <Legend />
-                <Bar dataKey="userRatio" fill={BRAND} name="내 지원" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="marketRatio" fill={MARKET} name="시장" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-          {comparison.data?.dataBaseDate && (
-            <p className="mt-1 text-xs text-zinc-400">시장 데이터 기준일: {comparison.data.dataBaseDate}</p>
-          )}
-        </ChartCard>
-
-        {/* DASH-05: 지역별 채용 공고 수 */}
-        <ChartCard
-          title="지역별 채용 공고 수"
-          badge="DASH-05"
-          isLoading={regionDist.isLoading}
-          isError={regionDist.isError}
-          onRetry={regionDist.refetch}
-        >
-          {regionData.length === 0 ? (
-            <EmptyState title="지역 데이터가 없습니다" />
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={regionData} layout="vertical" margin={{ top: 4, right: 48, left: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="region" tick={{ fontSize: 11 }} width={36} />
-                <Tooltip formatter={(v) => [`${v.toLocaleString()}건`, "공고 수"]} />
-                <Bar dataKey="postingCount" fill={MARKET} radius={[0, 3, 3, 0]} name="공고 수" />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-          {regionDist.data?.dataBaseDate && (
-            <p className="mt-1 text-xs text-zinc-400">시장 데이터 기준일: {regionDist.data.dataBaseDate}</p>
-          )}
-        </ChartCard>
       </div>
 
       {/* AI-05: AI 분석 리포트 패널 */}
@@ -322,7 +185,7 @@ export default function DashboardPage() {
 
         {!reportMutation.data && !reportMutation.isPending && !reportMutation.isError && (
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            AI 분석하기를 누르면 위 차트 수치를 바탕으로 자연어 리포트가 생성됩니다.
+            AI 분석하기를 누르면 지원 현황과 시장 데이터를 바탕으로 자연어 리포트가 생성됩니다.
           </p>
         )}
 
@@ -362,7 +225,7 @@ function DeadlineWidget() {
   const upcoming = (data?.content ?? [])
     .filter((j) => j.deadline && isActiveStage(j.currentStage ?? j.stage))
     .map((j) => ({ ...j, days: daysUntil(j.deadline) }))
-    .filter((j) => j.days != null && j.days >= 0 && j.days <= 7)
+    .filter((j) => j.days != null && j.days >= 0 && j.days <= DEADLINE_SOON_DAYS)
     .sort((a, b) => a.days - b.days);
 
   return (
@@ -381,7 +244,7 @@ function DeadlineWidget() {
       >
         {upcoming.length === 0 ? (
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            7일 이내 마감 임박 공고가 없습니다.
+            {DEADLINE_SOON_DAYS}일 이내 마감 임박 공고가 없습니다.
           </p>
         ) : (
           <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -405,20 +268,6 @@ function DeadlineWidget() {
         )}
       </AsyncBoundary>
     </div>
-  );
-}
-
-function Select({ value, onChange, options }) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none"
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
   );
 }
 
@@ -470,25 +319,6 @@ function KpiSkeletons() {
           <LoadingSkeleton className="h-8 w-1/2" />
         </div>
       ))}
-    </div>
-  );
-}
-
-function ChartCard({ title, badge, isLoading, isError, onRetry, children }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">{title}</p>
-        {badge && <span className="text-xs text-zinc-400">{badge}</span>}
-      </div>
-      <AsyncBoundary
-        isLoading={isLoading}
-        isError={isError}
-        onRetry={onRetry}
-        loadingFallback={<LoadingSkeleton className="h-[220px] w-full" />}
-      >
-        {children}
-      </AsyncBoundary>
     </div>
   );
 }

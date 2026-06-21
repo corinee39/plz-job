@@ -5,6 +5,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import LoginPage from "../pages/LoginPage";
 import OAuthCallbackPage from "../pages/OAuthCallbackPage";
 import DashboardPage from "../pages/DashboardPage";
+import MarketDashboardPage from "../pages/MarketDashboardPage";
 import JobPostingListPage from "../pages/JobPostingListPage";
 import JobBoardPage from "../pages/JobBoardPage";
 import JobPostingFormPage from "../pages/JobPostingFormPage";
@@ -26,6 +27,7 @@ export function AppRouter() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard/market" element={<MarketDashboardPage />} />
           <Route path="/job-postings" element={<JobPostingListPage />} />
           <Route path="/board" element={<JobBoardPage />} />
           <Route path="/job-postings/new" element={<JobPostingFormPage />} />
