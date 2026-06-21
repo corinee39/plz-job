@@ -47,7 +47,11 @@ export function useCreateJobPosting() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createJobPosting,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["jobPostings"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["jobPostings"] });
+      // JOB-07·DASH-01~03: 지원 기록 변동 → 대시보드 집계 재요청
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 
@@ -59,6 +63,8 @@ export function useUpdateJobPosting(id) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["jobPosting", id] });
       qc.invalidateQueries({ queryKey: ["jobPostings"] });
+      // 직무·지역 수정이 대시보드 필터 집계에 영향 → 무효화
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
@@ -68,7 +74,11 @@ export function useDeleteJobPosting() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deleteJobPosting,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["jobPostings"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["jobPostings"] });
+      // 공고 삭제 → 집계 모수 변동 → 대시보드 무효화
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 
@@ -81,6 +91,8 @@ export function useChangeStage(jobPostingId, applicationId) {
       qc.invalidateQueries({ queryKey: ["jobPosting", jobPostingId] });
       qc.invalidateQueries({ queryKey: ["stageHistories", applicationId] });
       qc.invalidateQueries({ queryKey: ["jobPostings"] });
+      // JOB-07: 단계 변경 → 퍼널·합격률 재계산 → 대시보드 무효화
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
