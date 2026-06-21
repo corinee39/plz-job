@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageShell } from "../components/layout/PageShell";
@@ -21,6 +21,7 @@ export default function JobPostingListPage() {
   // 인라인 마감일 편집 상태
   const [editDeadlineId, setEditDeadlineId] = useState(null);
   const [editDeadlineVal, setEditDeadlineVal] = useState("");
+  const deadlineEscaped = useRef(false);
 
   const params = {
     page,
@@ -32,7 +33,6 @@ export default function JobPostingListPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["jobPostings", params],
     queryFn: () => getJobPostings(params),
-    keepPreviousData: true,
   });
 
   const deadlineMutation = useMutation({
@@ -151,10 +151,19 @@ export default function JobPostingListPage() {
                           value={editDeadlineVal}
                           autoFocus
                           onChange={(e) => setEditDeadlineVal(e.target.value)}
-                          onBlur={() => commitDeadline(j.jobPostingId)}
+                          onBlur={() => {
+                            if (deadlineEscaped.current) {
+                              deadlineEscaped.current = false;
+                              return;
+                            }
+                            commitDeadline(j.jobPostingId);
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") commitDeadline(j.jobPostingId);
-                            if (e.key === "Escape") setEditDeadlineId(null);
+                            if (e.key === "Escape") {
+                              deadlineEscaped.current = true;
+                              setEditDeadlineId(null);
+                            }
                           }}
                           className="rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-xs bg-transparent w-32"
                         />
@@ -185,7 +194,7 @@ export default function JobPostingListPage() {
                           onClick={() => navigate(`/job-postings/${j.jobPostingId}`)}
                           className="rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         >
-                          수정
+                          상세
                         </button>
                         <button
                           disabled={deleteMutation.isPending}

@@ -9,6 +9,7 @@ import {
   getJobPosting,
   changeStage,
   getStageHistories,
+  updateJobPosting,
 } from "../features/jobPostings/api";
 import { getSchedules, createSchedule, deleteSchedule } from "../features/schedules/api";
 import { getDocuments, getDocument, linkVersionToApplication } from "../features/documents/api";
@@ -42,6 +43,47 @@ export default function JobPostingDetailPage() {
     queryFn: () => getStageHistories(appId),
     enabled: !!appId,
   });
+
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [editForm, setEditForm] = useState({});
+
+  const editMutation = useMutation({
+    mutationFn: (body) => updateJobPosting(id, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["jobPosting", id] });
+      qc.invalidateQueries({ queryKey: ["jobPostings"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      setIsEditingInfo(false);
+    },
+    onError: (err) => alert(err?.message ?? "수정에 실패했습니다."),
+  });
+
+  const startEdit = (j) => {
+    setEditForm({
+      companyName: j.companyName ?? "",
+      title: j.title ?? "",
+      position: j.position ?? "",
+      region: j.region ?? "",
+      appliedAt: j.appliedAt ?? "",
+      deadline: j.deadline ?? "",
+      techStacks: (j.techStacks ?? []).join(", "),
+      description: j.description ?? "",
+    });
+    setIsEditingInfo(true);
+  };
+
+  const submitEdit = (e) => {
+    e.preventDefault();
+    editMutation.mutate({
+      ...editForm,
+      appliedAt: editForm.appliedAt || null,
+      deadline: editForm.deadline || null,
+      techStacks: editForm.techStacks
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    });
+  };
 
   const [toStage, setToStage] = useState("");
   const [memo, setMemo] = useState("");
@@ -77,44 +119,91 @@ export default function JobPostingDetailPage() {
     >
       {/* 공고 기본 정보 */}
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
-        <div className="flex flex-wrap gap-2 items-center">
-          <StageBadge code={j.currentStage} />
-          {j.appliedAt && (
-            <span className="text-xs text-zinc-500">지원일 {j.appliedAt}</span>
-          )}
-          {j.deadline && (
-            <span className="flex items-center gap-1.5 text-xs text-zinc-500">
-              마감 {j.deadline}
-              <DdayBadge deadline={j.deadline} />
-            </span>
-          )}
-          {j.url && (
-            <a
-              href={j.url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-auto"
-            >
-              원문 공고 ↗
-            </a>
-          )}
-        </div>
-        {j.techStacks?.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {j.techStacks.map((t) => (
-              <span
-                key={t}
-                className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-zinc-600 dark:text-zinc-300"
+        {isEditingInfo ? (
+          <form onSubmit={submitEdit} className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <DetailField label="회사명 *" required value={editForm.companyName} onChange={(e) => setEditForm((f) => ({ ...f, companyName: e.target.value }))} />
+              <DetailField label="공고명 *" required value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} />
+              <DetailField label="직무" value={editForm.position} onChange={(e) => setEditForm((f) => ({ ...f, position: e.target.value }))} />
+              <DetailField label="지역" value={editForm.region} onChange={(e) => setEditForm((f) => ({ ...f, region: e.target.value }))} />
+              <DetailField label="지원일" type="date" value={editForm.appliedAt} onChange={(e) => setEditForm((f) => ({ ...f, appliedAt: e.target.value }))} />
+              <DetailField label="마감일" type="date" value={editForm.deadline} onChange={(e) => setEditForm((f) => ({ ...f, deadline: e.target.value }))} />
+            </div>
+            <DetailField label="기술 스택 (쉼표 구분)" value={editForm.techStacks} onChange={(e) => setEditForm((f) => ({ ...f, techStacks: e.target.value }))} placeholder="Java, Spring Boot" />
+            <div>
+              <label className="block text-xs font-medium text-zinc-500 mb-1">설명</label>
+              <textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                rows={3}
+                className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm bg-transparent resize-none"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="submit"
+                disabled={editMutation.isPending}
+                className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
               >
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-        {j.description && (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
-            {j.description}
-          </p>
+                {editMutation.isPending ? "저장 중…" : "저장"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditingInfo(false)}
+                className="rounded-md border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm"
+              >
+                취소
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2 items-center">
+              <StageBadge code={j.currentStage} />
+              {j.appliedAt && (
+                <span className="text-xs text-zinc-500">지원일 {j.appliedAt}</span>
+              )}
+              {j.deadline && (
+                <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+                  마감 {j.deadline}
+                  <DdayBadge deadline={j.deadline} />
+                </span>
+              )}
+              {j.url && (
+                <a
+                  href={j.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-auto"
+                >
+                  원문 공고 ↗
+                </a>
+              )}
+              <button
+                onClick={() => startEdit(j)}
+                className="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 ml-auto"
+              >
+                수정 ✎
+              </button>
+            </div>
+            {j.techStacks?.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {j.techStacks.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-zinc-600 dark:text-zinc-300"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
+            {j.description && (
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
+                {j.description}
+              </p>
+            )}
+          </>
         )}
       </div>
 
@@ -538,6 +627,22 @@ function ScheduleSection({ appId }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function DetailField({ label, required, type = "text", value, onChange, placeholder }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-zinc-500 mb-1">{label}</label>
+      <input
+        type={type}
+        required={required}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm bg-transparent"
+      />
     </div>
   );
 }

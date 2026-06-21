@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay, isSameMonth } from "date-fns";
+import { format, parse, startOfWeek, getDay, isSameMonth, startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns";
 import { ko } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { PageShell } from "../components/layout/PageShell";
@@ -138,9 +138,13 @@ export default function SchedulePage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState(Views.MONTH);
 
+  // 현재 뷰 기준 ±1개월 범위를 한 번에 불러온다 (뷰 전환 시 추가 요청 최소화)
+  const from = format(startOfMonth(subMonths(currentDate, 1)), "yyyy-MM-dd");
+  const to = format(endOfMonth(addMonths(currentDate, 1)), "yyyy-MM-dd");
+
   const { data = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ["schedules"],
-    queryFn: () => getSchedules({}),
+    queryKey: ["schedules", from, to],
+    queryFn: () => getSchedules({ from, to }),
   });
 
   const updateMutation = useMutation({
@@ -160,6 +164,8 @@ export default function SchedulePage() {
     },
     onError: (err) => alert(err?.message ?? "삭제에 실패했습니다."),
   });
+
+  // 달력 월 이동 시 쿼리 키(from/to)가 바뀌어 자동으로 새 범위를 재요청한다
 
   const events = data.map((s) => ({
     id: s.scheduleId,
