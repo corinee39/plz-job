@@ -33,9 +33,10 @@ public class ScheduleController {
     @GetMapping("/schedules")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> list(
             @LoginUserId Long userId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return ResponseEntity.ok(ApiResponse.ok(scheduleService.list(userId, from, to)));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) Long applicationId) {
+        return ResponseEntity.ok(ApiResponse.ok(scheduleService.list(userId, from, to, applicationId)));
     }
 
     @PutMapping("/schedules/{scheduleId}")

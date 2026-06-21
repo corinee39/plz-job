@@ -31,11 +31,18 @@ public class ScheduleService {
         return ScheduleResponse.from(s);
     }
 
-    public List<ScheduleResponse> list(Long userId, LocalDate from, LocalDate to) {
-        return scheduleRepository
-                .findByApplication_User_IdAndStartAtBetweenOrderByStartAt(
-                        userId, from.atStartOfDay(), to.atTime(23, 59, 59))
-                .stream().map(ScheduleResponse::from).toList();
+    public List<ScheduleResponse> list(Long userId, LocalDate from, LocalDate to, Long applicationId) {
+        List<RecruitmentSchedule> rows;
+        if (applicationId != null) {
+            ownedApp(userId, applicationId);   // 소유 검증(아니면 예외)
+            rows = scheduleRepository.findByApplication_IdOrderByStartAt(applicationId);
+        } else if (from != null && to != null) {
+            rows = scheduleRepository.findByApplication_User_IdAndStartAtBetweenOrderByStartAt(
+                    userId, from.atStartOfDay(), to.atTime(23, 59, 59));
+        } else {
+            rows = scheduleRepository.findByApplication_User_IdOrderByStartAt(userId);
+        }
+        return rows.stream().map(ScheduleResponse::from).toList();
     }
 
     @Transactional

@@ -20,7 +20,8 @@
 --------------------------------------------------------------------------------
 
 -- 1) 기존 시드 정리(재실행 대비). 자식 → 부모 순.
-DELETE FROM APPLICATION_STAGE_HISTORIES WHERE id >= 9500000;
+DELETE FROM APPLICATION_STAGE_HISTORIES WHERE id >= 9500000 AND id < 9600000;
+DELETE FROM RECRUITMENT_SCHEDULES       WHERE id >= 9600000;
 DELETE FROM APPLICATIONS               WHERE id >= 9000000 AND id < 9500000;
 DELETE FROM JOB_POSTINGS               WHERE id >= 9000000 AND id < 9500000;
 
@@ -137,5 +138,19 @@ SELECT
   '시드 데이터'
 FROM p CROSS JOIN steps s
 WHERE s.j <= REGEXP_COUNT(p.path, ',') + 1;
+
+-- 5) 일정(달력 확인용) — 짝수 i 의 지원에 1건씩, 이번 달 전후(-10~+24일)로 분포.
+INSERT INTO RECRUITMENT_SCHEDULES
+  (id, application_id, schedule_type, start_at, memo, created_at, updated_at)
+SELECT
+  9600000 + i, 9000000 + i,
+  CASE MOD(i,8) WHEN 0 THEN 'INTERVIEW' WHEN 2 THEN 'CODING_TEST'
+                WHEN 4 THEN 'DEADLINE'  ELSE 'ETC' END,
+  SYSTIMESTAMP + NUMTODSINTERVAL(MOD(i,35) - 10, 'DAY') + NUMTODSINTERVAL(10, 'HOUR'),
+  CASE MOD(i,8) WHEN 0 THEN '1차 면접' WHEN 2 THEN '코딩테스트'
+                WHEN 4 THEN '서류 마감' ELSE '전형 일정' END,
+  SYSTIMESTAMP, SYSTIMESTAMP
+FROM (SELECT LEVEL i FROM dual CONNECT BY LEVEL <= 80)
+WHERE MOD(i, 2) = 0;
 
 COMMIT;

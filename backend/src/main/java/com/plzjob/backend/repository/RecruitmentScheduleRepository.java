@@ -8,5 +8,7 @@ import java.util.List;
 public interface RecruitmentScheduleRepository extends JpaRepository<RecruitmentSchedule, Long> {
     List<RecruitmentSchedule> findByApplication_User_IdAndStartAtBetweenOrderByStartAt(
             Long userId, LocalDateTime from, LocalDateTime to);
+    List<RecruitmentSchedule> findByApplication_User_IdOrderByStartAt(Long userId);
+    List<RecruitmentSchedule> findByApplication_IdOrderByStartAt(Long applicationId);
     long countByApplication_User_IdAndStartAtAfter(Long userId, LocalDateTime now);
 }
