@@ -64,6 +64,26 @@ export default function InterviewAiPage() {
     enabled: !!applicationId,
   });
 
+  // 이 공고에 이미 제출(연결)한 서류가 있으면 문서·버전을 자동 선택해 둔다.
+  // 렌더 중 상태 보정(React 권장 패턴) — 최초 1회만 적용하고 이후 사용자의 선택을 덮어쓰지 않는다.
+  const firstSubmittedDocId = job.data?.submittedDocuments?.[0]?.documentId;
+  const firstSubmittedVersionId = job.data?.submittedDocuments?.[0]?.versionId;
+  const [autoDocApplied, setAutoDocApplied] = useState(false);
+  const [autoVersionApplied, setAutoVersionApplied] = useState(false);
+
+  if (!autoDocApplied && firstSubmittedDocId != null) {
+    setDocId(String(firstSubmittedDocId));
+    setAutoDocApplied(true);
+  }
+  if (!autoVersionApplied && firstSubmittedVersionId != null && docDetail.data) {
+    // 자동 선택한 문서의 버전 중 텍스트가 추출된 것일 때만 버전까지 선택(드롭다운 목록과 동일 기준).
+    const extracted = (docDetail.data.versions ?? []).some(
+      (v) => v.versionId === firstSubmittedVersionId && v.extractStatus === "SUCCESS"
+    );
+    if (extracted) setVersionId(String(firstSubmittedVersionId));
+    setAutoVersionApplied(true);
+  }
+
   const generate = useMutation({
     mutationFn: ({ regenerate }) =>
       generateInterviewQuestions(applicationId, {

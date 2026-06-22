@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageShell } from "../components/layout/PageShell";
 import { StageBadge } from "../components/common/StageBadge";
@@ -12,7 +12,6 @@ import { STAGE_CODES } from "../constants/stageCodes";
 
 // UI-03 — 검색, 상태 필터, 페이지네이션, 수정/삭제 (JOB-05, 06, 08)
 export default function JobPostingListPage() {
-  const navigate = useNavigate();
   const qc = useQueryClient();
 
   const [stage, setStage] = useState("");
@@ -127,7 +126,7 @@ export default function JobPostingListPage() {
                   <th className="px-4 py-3 text-left font-medium hidden md:table-cell">지역</th>
                   <th className="px-4 py-3 text-left font-medium hidden md:table-cell">마감</th>
                   <th className="px-4 py-3 text-left font-medium">단계</th>
-                  <th className="px-4 py-3 text-right font-medium">액션</th>
+                  <th className="px-4 py-3 text-right font-medium"><span className="sr-only">삭제</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -189,24 +188,16 @@ export default function JobPostingListPage() {
                       <StageBadge code={j.stage ?? j.currentStage} />
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => navigate(`/job-postings/${j.jobPostingId}`)}
-                          className="rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                        >
-                          상세
-                        </button>
-                        <button
-                          disabled={deleteMutation.isPending}
-                          onClick={() => {
-                            if (confirm(`'${j.companyName} — ${j.title}' 공고를 삭제할까요?`))
-                              deleteMutation.mutate(j.jobPostingId);
-                          }}
-                          className="rounded-md border border-red-200 dark:border-red-900 px-2.5 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40"
-                        >
-                          삭제
-                        </button>
-                      </div>
+                      <button
+                        disabled={deleteMutation.isPending}
+                        onClick={() => {
+                          if (confirm(`'${j.companyName} — ${j.title}' 공고를 삭제할까요?`))
+                            deleteMutation.mutate(j.jobPostingId);
+                        }}
+                        className="rounded-md border border-red-200 dark:border-red-900 px-2.5 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40"
+                      >
+                        삭제
+                      </button>
                     </td>
                   </tr>
                 ))}

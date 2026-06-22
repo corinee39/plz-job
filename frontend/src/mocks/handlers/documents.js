@@ -200,6 +200,7 @@ export const documentHandlers = [
     if (!mockSubmittedDocs[appId].some((d) => d.versionId === found.version.versionId)) {
       mockSubmittedDocs[appId].push({
         versionId: found.version.versionId,
+        documentId: found.doc.documentId,
         documentTitle: found.doc.title,
         versionName: found.version.versionName,
       });
@@ -213,5 +214,15 @@ export const documentHandlers = [
       },
       { status: 201 }
     );
+  }),
+
+  // 공고(지원)에서 제출 문서 버전 연결 해제 (DOC-03)
+  http.delete("*/api/applications/:applicationId/documents/:versionId", ({ params }) => {
+    const appId = Number(params.applicationId);
+    const versionId = Number(params.versionId);
+    if (mockSubmittedDocs[appId]) {
+      mockSubmittedDocs[appId] = mockSubmittedDocs[appId].filter((d) => d.versionId !== versionId);
+    }
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

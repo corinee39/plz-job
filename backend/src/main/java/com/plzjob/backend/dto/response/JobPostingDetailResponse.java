@@ -26,7 +26,7 @@ public class JobPostingDetailResponse {
     private boolean favorite;
     private List<SubmittedDocumentInfo> submittedDocuments;
 
-    public record SubmittedDocumentInfo(Long versionId, String documentTitle, String versionName) {}
+    public record SubmittedDocumentInfo(Long versionId, Long documentId, String documentTitle, String versionName) {}
 
     public static JobPostingDetailResponse from(Application a, List<ApplicationDocument> docs) {
         var p = a.getJobPosting();
@@ -42,6 +42,7 @@ public class JobPostingDetailResponse {
                 .submittedDocuments(docs.stream()
                         .map(d -> new SubmittedDocumentInfo(
                                 d.getVersion().getId(),
+                                d.getVersion().getDocument().getId(),
                                 d.getVersion().getDocument().getTitle(),
                                 d.getVersion().getVersionName()))
                         .toList())

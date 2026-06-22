@@ -18,6 +18,18 @@ export const STAGE_CODES = {
 
 export const STAGE_KEYS = Object.keys(STAGE_CODES);
 
+// 칸반 보드용 단계 그룹 — 합격/불합격 쌍을 phase로 묶어 13컬럼을 6컬럼으로 축소한다.
+// dropTarget: 다른 phase에서 카드를 드롭했을 때 설정할 대표(진입) 단계.
+//   서류·최종은 중립 단계가 없어 합격 쪽(_PASS)을 기본값으로 두고, 불합격·철회는 상세 페이지에서 보정한다.
+export const STAGE_PHASES = [
+  { key: "INTEREST",  label: "관심·예정",   stages: ["INTERESTED", "PLANNED"],                          dropTarget: "INTERESTED" },
+  { key: "APPLIED",   label: "지원",        stages: ["APPLIED"],                                        dropTarget: "APPLIED" },
+  { key: "DOCUMENT",  label: "서류",        stages: ["DOCUMENT_PASS", "DOCUMENT_FAIL"],                 dropTarget: "DOCUMENT_PASS" },
+  { key: "CODING",    label: "코딩테스트",  stages: ["CODING_TEST", "CODING_PASS", "CODING_FAIL"],      dropTarget: "CODING_TEST" },
+  { key: "INTERVIEW", label: "면접",        stages: ["INTERVIEW", "INTERVIEW_PASS", "INTERVIEW_FAIL"],  dropTarget: "INTERVIEW" },
+  { key: "FINAL",     label: "최종",        stages: ["FINAL_PASS", "WITHDRAWN"],                        dropTarget: "FINAL_PASS" },
+];
+
 export const SCHEDULE_TYPE_LABELS = {
   DEADLINE: "마감",
   CODING_TEST: "코딩테스트",

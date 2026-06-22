@@ -46,3 +46,8 @@ export async function deleteDocument(documentId) {
 export async function linkVersionToApplication(applicationId, versionId) {
   return apiClient.post(`/applications/${applicationId}/documents/${versionId}`);
 }
+
+// 공고(지원)에서 제출 문서 버전 연결 해제 (DOC-03)
+export async function unlinkVersionFromApplication(applicationId, versionId) {
+  return apiClient.delete(`/applications/${applicationId}/documents/${versionId}`);
+}

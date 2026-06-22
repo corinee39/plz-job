@@ -12,7 +12,7 @@ import {
   updateJobPosting,
 } from "../features/jobPostings/api";
 import { getSchedules, createSchedule, deleteSchedule } from "../features/schedules/api";
-import { getDocuments, getDocument, linkVersionToApplication } from "../features/documents/api";
+import { getDocuments, getDocument, linkVersionToApplication, unlinkVersionFromApplication } from "../features/documents/api";
 import { useCurrentUser } from "../features/auth/hooks";
 import { DdayBadge } from "../components/common/DdayBadge";
 import { stackMatch } from "../lib/jobMetrics";
@@ -428,6 +428,12 @@ function SubmittedDocumentsSection({ appId, jobPostingId, submittedDocuments }) 
     onError: (err) => alert(err?.message ?? "문서 연결에 실패했습니다."),
   });
 
+  const unlinkMutation = useMutation({
+    mutationFn: (vId) => unlinkVersionFromApplication(appId, vId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["jobPosting", jobPostingId] }),
+    onError: (err) => alert(err?.message ?? "문서 연결 해제에 실패했습니다."),
+  });
+
   const inputCls =
     "rounded-md border border-zinc-300 dark:border-zinc-600 px-2 py-1.5 text-sm bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100";
 
@@ -447,6 +453,16 @@ function SubmittedDocumentsSection({ appId, jobPostingId, submittedDocuments }) 
               <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0" />
               <span className="font-medium">{d.documentTitle}</span>
               <span className="text-zinc-500">{d.versionName}</span>
+              <button
+                disabled={unlinkMutation.isPending}
+                onClick={() => {
+                  if (confirm(`'${d.documentTitle}' 문서를 제출 목록에서 삭제할까요?`))
+                    unlinkMutation.mutate(d.versionId);
+                }}
+                className="ml-auto shrink-0 text-xs text-red-500 hover:text-red-700 disabled:opacity-40"
+              >
+                삭제
+              </button>
             </li>
           ))}
         </ul>

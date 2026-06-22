@@ -47,7 +47,6 @@ export default function MarketDashboardPage() {
         {/* DASH-04: 시장 기술 스택 추세 */}
         <ChartCard
           title="시장 기술 스택 추세"
-          badge="DASH-04"
           isLoading={stackTrends.isLoading}
           isError={stackTrends.isError}
           onRetry={stackTrends.refetch}
@@ -71,14 +70,15 @@ export default function MarketDashboardPage() {
             </ResponsiveContainer>
           )}
           {stackTrends.data?.dataBaseDate && (
-            <p className="mt-1 text-xs text-zinc-400">시장 데이터 기준일: {stackTrends.data.dataBaseDate}</p>
+            <p className="mt-1 text-xs text-zinc-400">
+              사람인 최근 공고 30페이지 크롤링 기준({stackTrends.data.dataBaseDate})
+            </p>
           )}
         </ChartCard>
 
         {/* DASH-06: 개인 vs 시장 기술 스택 비교 */}
         <ChartCard
           title="기술 스택 비교 (내 지원 vs 시장)"
-          badge="DASH-06"
           isLoading={comparison.isLoading}
           isError={comparison.isError}
           onRetry={comparison.refetch}
@@ -99,14 +99,15 @@ export default function MarketDashboardPage() {
             </ResponsiveContainer>
           )}
           {comparison.data?.dataBaseDate && (
-            <p className="mt-1 text-xs text-zinc-400">시장 데이터 기준일: {comparison.data.dataBaseDate}</p>
+            <p className="mt-1 text-xs text-zinc-400">
+              사람인 최근 공고 30페이지 크롤링 기준({comparison.data.dataBaseDate})
+            </p>
           )}
         </ChartCard>
 
         {/* DASH-05: 지역별 채용 공고 수 */}
         <ChartCard
           title="지역별 채용 공고 수"
-          badge="DASH-05"
           isLoading={regionDist.isLoading}
           isError={regionDist.isError}
           onRetry={regionDist.refetch}
@@ -125,7 +126,9 @@ export default function MarketDashboardPage() {
             </ResponsiveContainer>
           )}
           {regionDist.data?.dataBaseDate && (
-            <p className="mt-1 text-xs text-zinc-400">시장 데이터 기준일: {regionDist.data.dataBaseDate}</p>
+            <p className="mt-1 text-xs text-zinc-400">
+              사람인 최근 공고 30페이지 크롤링 기준({regionDist.data.dataBaseDate})
+            </p>
           )}
         </ChartCard>
       </div>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { navItems } from "../../constants/nav";
 
 const linkClass = ({ isActive }) =>
@@ -14,9 +14,12 @@ function NavDropdown({ item }) {
   const { pathname } = useLocation();
   const active = pathname === item.to || pathname.startsWith(item.to + "/");
   const [open, setOpen] = useState(active);
-  useEffect(() => {
+  // 현재 경로가 하위로 바뀌면 자동 펼침 — 렌더 중 상태 보정(React 권장 패턴).
+  const [prevActive, setPrevActive] = useState(active);
+  if (active !== prevActive) {
+    setPrevActive(active);
     if (active) setOpen(true);
-  }, [active]);
+  }
 
   return (
     <div>
@@ -49,7 +52,12 @@ function NavDropdown({ item }) {
 export function Sidebar() {
   return (
     <aside className="hidden md:flex md:flex-col md:w-56 border-r border-zinc-200 dark:border-zinc-800 shrink-0">
-      <div className="h-14 flex items-center px-4 font-semibold text-lg">Plz-Job</div>
+      <Link
+        to="/dashboard"
+        className="h-14 flex items-center px-4 font-semibold text-lg hover:opacity-80 transition-opacity"
+      >
+        Plz-Job
+      </Link>
       <nav className="flex-1 px-2 py-2 space-y-1">
         {navItems.map((item) =>
           item.children ? (

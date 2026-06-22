@@ -6,8 +6,9 @@ import { AsyncBoundary } from "../components/common/AsyncBoundary";
 import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
 import { EmptyState } from "../components/common/EmptyState";
 import { DdayBadge } from "../components/common/DdayBadge";
+import { StageBadge } from "../components/common/StageBadge";
 import { getJobPostings, changeStage } from "../features/jobPostings/api";
-import { STAGE_CODES, STAGE_KEYS } from "../constants/stageCodes";
+import { STAGE_PHASES } from "../constants/stageCodes";
 
 // UI-03 확장 — 지원 단계 파이프라인 보드(칸반). 카드를 드래그해 단계 변경(JOB-07).
 const BOARD_PARAMS = { page: 0, size: 100 };
@@ -45,23 +46,26 @@ export default function JobBoardPage() {
     onSettled: () => qc.invalidateQueries({ queryKey: ["jobPostings"] }),
   });
 
-  const handleDrop = (toStage) => {
-    if (dragged && dragged.currentStage !== toStage) {
-      stageMutation.mutate({ applicationId: dragged.applicationId, toStage });
+  // 드롭: 다른 phase로 옮길 때만 그 phase의 대표 단계로 변경. 같은 phase 내(예: 서류 합격↔불합격)면 no-op.
+  const handleDrop = (phase) => {
+    if (dragged && !phase.stages.includes(dragged.currentStage ?? dragged.stage)) {
+      stageMutation.mutate({ applicationId: dragged.applicationId, toStage: phase.dropTarget });
     }
     setDragged(null);
   };
 
   const postings = data?.content ?? [];
-  const byStage = STAGE_KEYS.reduce((acc, code) => {
-    acc[code] = postings.filter((p) => (p.currentStage ?? p.stage) === code);
+  const byPhase = STAGE_PHASES.reduce((acc, phase) => {
+    acc[phase.key] = postings.filter((p) =>
+      phase.stages.includes(p.currentStage ?? p.stage)
+    );
     return acc;
   }, {});
 
   return (
     <PageShell
       title="지원 보드"
-      description="공고 카드를 드래그해 지원 단계를 바꿉니다. 좌우로 스크롤하세요."
+      description="카드를 드래그해 단계를 진행합니다. 합격·불합격 등 세부 상태는 카드 배지로 표시되며, 정확한 변경은 상세 페이지에서 합니다."
     >
       <div className="flex justify-end">
         <Link
@@ -86,15 +90,15 @@ export default function JobBoardPage() {
             actionTo="/job-postings/new"
           />
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-4">
-            {STAGE_KEYS.map((code) => (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {STAGE_PHASES.map((phase) => (
               <BoardColumn
-                key={code}
-                code={code}
-                cards={byStage[code]}
-                onDrop={() => handleDrop(code)}
+                key={phase.key}
+                phase={phase}
+                cards={byPhase[phase.key]}
+                onDrop={() => handleDrop(phase)}
                 onDragStartCard={setDragged}
-                isDropTarget={dragged && dragged.currentStage !== code}
+                isDropTarget={dragged && !phase.stages.includes(dragged.currentStage ?? dragged.stage)}
               />
             ))}
           </div>
@@ -104,12 +108,12 @@ export default function JobBoardPage() {
   );
 }
 
-function BoardColumn({ code, cards, onDrop, onDragStartCard, isDropTarget }) {
+function BoardColumn({ phase, cards, onDrop, onDragStartCard, isDropTarget }) {
   const [over, setOver] = useState(false);
   return (
-    <div className="w-60 shrink-0">
+    <div className="min-w-0">
       <div className="flex items-center justify-between px-1 pb-2">
-        <span className="text-sm font-medium">{STAGE_CODES[code]}</span>
+        <span className="text-sm font-medium">{phase.label}</span>
         <span className="text-xs text-zinc-400">{cards.length}</span>
       </div>
       <div
@@ -122,7 +126,7 @@ function BoardColumn({ code, cards, onDrop, onDragStartCard, isDropTarget }) {
           setOver(false);
           onDrop();
         }}
-        className={`min-h-[60vh] space-y-2 rounded-lg border p-2 transition-colors ${
+        className={`min-h-[50vh] space-y-2 rounded-lg border p-2 transition-colors ${
           over
             ? "border-blue-400 bg-blue-50/60 dark:bg-blue-950/30"
             : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40"
@@ -158,6 +162,7 @@ function BoardCard({ card, onDragStart }) {
         {card.title}
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <StageBadge code={card.currentStage ?? card.stage} />
         {card.position && (
           <span className="text-xs text-zinc-400">{card.position}</span>
         )}
