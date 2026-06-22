@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
--- 화면 확인용 더미 시드 — JOB_POSTINGS 약 80건 + 1:1 APPLICATIONS + 단계 이력
+-- 화면 확인용 더미 시드 — JOB_POSTINGS 약 30건 + 1:1 APPLICATIONS + 단계 이력
 --------------------------------------------------------------------------------
 -- ⚠️ 이 파일은 PL/SQL 블록을 쓰지 않는 "순수 SQL" 버전이다.
 --    (DBeaver/SQL Developer 가 세미콜론 단위로 잘라 실행해도 그대로 동작 →
@@ -22,10 +22,11 @@
 -- 1) 기존 시드 정리(재실행 대비). 자식 → 부모 순.
 DELETE FROM APPLICATION_STAGE_HISTORIES WHERE id >= 9500000 AND id < 9600000;
 DELETE FROM RECRUITMENT_SCHEDULES       WHERE id >= 9600000;
+DELETE FROM APPLICATION_DOCUMENTS       WHERE application_id >= 9000000 AND application_id < 9500000;
 DELETE FROM APPLICATIONS               WHERE id >= 9000000 AND id < 9500000;
 DELETE FROM JOB_POSTINGS               WHERE id >= 9000000 AND id < 9500000;
 
--- 2) 공고 80건
+-- 2) 공고 30건
 INSERT INTO JOB_POSTINGS
   (id, user_id, company_name, title, url, position, region, start_date, deadline,
    tech_stacks, description, favorite, created_at, updated_at)
@@ -46,7 +47,7 @@ WITH g AS (
       WHEN 0 THEN '서울 강남구' WHEN 1 THEN '서울 서초구' WHEN 2 THEN '서울 송파구' WHEN 3 THEN '서울 구로구'
       WHEN 4 THEN '경기 성남시 분당구' WHEN 5 THEN '부산 해운대구' WHEN 6 THEN '대전 유성구'
       WHEN 7 THEN '인천 연수구' ELSE '경기 수원시 영통구' END AS region
-  FROM (SELECT LEVEL i FROM dual CONNECT BY LEVEL <= 80)
+  FROM (SELECT LEVEL i FROM dual CONNECT BY LEVEL <= 30)
 )
 SELECT
   9000000 + i, owner_id, company,
@@ -69,7 +70,7 @@ SELECT
   SYSTIMESTAMP, SYSTIMESTAMP
 FROM g;
 
--- 3) 지원 80건 (공고와 1:1). 단계는 MOD(i,13) 으로 13단계 고루 분포.
+-- 3) 지원 30건 (공고와 1:1). 단계는 MOD(i,13) 으로 13단계 고루 분포.
 INSERT INTO APPLICATIONS
   (id, job_posting_id, user_id, current_stage, applied_at, final_result, created_at, updated_at)
 WITH g AS (
@@ -82,7 +83,7 @@ WITH g AS (
       WHEN 6 THEN 'CODING_PASS' WHEN 7 THEN 'CODING_FAIL' WHEN 8 THEN 'INTERVIEW'
       WHEN 9 THEN 'INTERVIEW_PASS' WHEN 10 THEN 'INTERVIEW_FAIL' WHEN 11 THEN 'FINAL_PASS'
       ELSE 'WITHDRAWN' END AS stage
-  FROM (SELECT LEVEL i FROM dual CONNECT BY LEVEL <= 80)
+  FROM (SELECT LEVEL i FROM dual CONNECT BY LEVEL <= 30)
 )
 SELECT
   9000000 + i, 9000000 + i, owner_id, stage,
@@ -108,7 +109,7 @@ WITH g AS (
       WHEN 6 THEN 'CODING_PASS' WHEN 7 THEN 'CODING_FAIL' WHEN 8 THEN 'INTERVIEW'
       WHEN 9 THEN 'INTERVIEW_PASS' WHEN 10 THEN 'INTERVIEW_FAIL' WHEN 11 THEN 'FINAL_PASS'
       ELSE 'WITHDRAWN' END AS stage
-  FROM (SELECT LEVEL i FROM dual CONNECT BY LEVEL <= 80)
+  FROM (SELECT LEVEL i FROM dual CONNECT BY LEVEL <= 30)
 ),
 p AS (
   SELECT i, v_start,
@@ -150,7 +151,7 @@ SELECT
   CASE MOD(i,8) WHEN 0 THEN '1차 면접' WHEN 2 THEN '코딩테스트'
                 WHEN 4 THEN '서류 마감' ELSE '전형 일정' END,
   SYSTIMESTAMP, SYSTIMESTAMP
-FROM (SELECT LEVEL i FROM dual CONNECT BY LEVEL <= 80)
+FROM (SELECT LEVEL i FROM dual CONNECT BY LEVEL <= 30)
 WHERE MOD(i, 2) = 0;
 
 COMMIT;
