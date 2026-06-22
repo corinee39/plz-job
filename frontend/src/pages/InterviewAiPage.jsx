@@ -100,7 +100,7 @@ export default function InterviewAiPage() {
 
   const errorCode = generate.error?.code;
   const inputCls =
-    "rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm bg-transparent";
+    "rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100";
 
   const hasExtractedVersions = (docDetail.data?.versions ?? []).filter(
     (v) => v.extractStatus === "SUCCESS"
