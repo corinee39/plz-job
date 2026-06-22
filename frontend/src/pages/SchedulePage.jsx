@@ -9,6 +9,7 @@ import { PageShell } from "../components/layout/PageShell";
 import { Button } from "../components/common/Button";
 import { AsyncBoundary } from "../components/common/AsyncBoundary";
 import { getSchedules, updateSchedule, deleteSchedule } from "../features/schedules/api";
+import { formatScheduleDate, toDateInputValue, toStartOfDayDateTime } from "../lib/scheduleDates";
 import { SCHEDULE_TYPE_LABELS } from "../constants/stageCodes";
 
 const localizer = dateFnsLocalizer({
@@ -19,12 +20,13 @@ const localizer = dateFnsLocalizer({
   locales: { ko },
 });
 
-const VIEW_LABELS = { month: "월", week: "주", agenda: "목록" };
+const VIEW_LABELS = { month: "월", agenda: "목록" };
+const CALENDAR_VIEWS = [Views.MONTH, Views.AGENDA];
 
 // UI-03 — 커스텀 캘린더 툴바
 function CalendarToolbar({ date, view, views, onNavigate, onView }) {
   const isToday = isSameMonth(date, new Date()) && date.getFullYear() === new Date().getFullYear();
-  const label = format(date, view === "month" ? "yyyy년 M월" : view === "week" ? "yyyy년 M월" : "yyyy년 M월", { locale: ko });
+  const label = format(date, "yyyy년 M월", { locale: ko });
 
   return (
     <div className="mb-3 grid grid-cols-3 items-center gap-2">
@@ -99,35 +101,107 @@ function ScheduleTypeBadge({ type }) {
   );
 }
 
-function formatDateTime(iso) {
-  return new Date(iso).toLocaleString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function formatScheduleDetailDate(iso) {
+  return formatScheduleDate(iso, { year: "numeric", month: "long" });
 }
 
-// 달력 셀 내 이벤트: 뱃지 + 회사명 + 시간 + 메모
+// 달력 셀 내 이벤트: 뱃지 + 회사명 + 메모
 function EventCell({ event }) {
   const s = event.resource;
-  const time = new Date(s.startAt).toLocaleTimeString("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
   return (
     <span className="flex flex-col gap-0.5 overflow-hidden py-0.5">
       <span className="flex items-center gap-1">
         <ScheduleTypeBadge type={s.scheduleType} />
         <span className="truncate text-xs font-medium text-zinc-800 dark:text-zinc-100">{s.companyName}</span>
       </span>
-      <span className="pl-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">{time}</span>
       {s.memo && (
         <span className="truncate pl-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">{s.memo}</span>
       )}
     </span>
+  );
+}
+
+function MonthScheduleList({ events, currentDate, onSelect }) {
+  const monthEvents = events
+    .filter((event) => isSameMonth(event.start, currentDate))
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+  if (monthEvents.length === 0) {
+    return (
+      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-12 text-center">
+        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          {format(currentDate, "yyyy년 M월", { locale: ko })} 일정이 없습니다.
+        </p>
+        <p className="mt-1 text-xs text-zinc-500">
+          공고 상세에서 일정을 추가하면 이 목록에 표시됩니다.
+        </p>
+      </div>
+    );
+  }
+
+  const grouped = monthEvents.reduce((acc, event) => {
+    const key = format(event.start, "yyyy-MM-dd");
+    if (!acc.has(key)) acc.set(key, []);
+    acc.get(key).push(event);
+    return acc;
+  }, new Map());
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 px-4 py-3 dark:bg-zinc-900">
+        <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+          {format(currentDate, "yyyy년 M월 일정", { locale: ko })}
+        </h2>
+        <span className="text-xs text-zinc-500">{monthEvents.length}건</span>
+      </div>
+
+      <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        {[...grouped.entries()].map(([dateKey, dayEvents]) => {
+          const date = dayEvents[0].start;
+
+          return (
+            <section key={dateKey} className="grid gap-3 px-4 py-3 sm:grid-cols-[110px_1fr]">
+              <div className="text-sm">
+                <p className="font-semibold text-zinc-800 dark:text-zinc-100">
+                  {format(date, "M월 d일", { locale: ko })}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  {format(date, "eee", { locale: ko })}
+                </p>
+              </div>
+
+              <ul className="space-y-2">
+                {dayEvents.map((event) => {
+                  const schedule = event.resource;
+
+                  return (
+                    <li key={schedule.scheduleId}>
+                      <button
+                        type="button"
+                        onClick={() => onSelect(event)}
+                        className="w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <ScheduleTypeBadge type={schedule.scheduleType} />
+                          <span className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                            {schedule.companyName}
+                          </span>
+                        </span>
+                        {schedule.memo && (
+                          <span className="mt-1 block truncate text-xs text-zinc-500">
+                            {schedule.memo}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -178,7 +252,7 @@ export default function SchedulePage() {
   }));
 
   // 월 뷰에서는 인접 월(회색 처리된 날짜)의 일정은 표시하지 않는다.
-  // 주/목록 뷰는 "다른 월" 개념이 없으므로 전체를 그대로 보여준다.
+  // 목록 뷰는 "다른 월" 개념이 없으므로 전체를 그대로 보여준다.
   const visibleEvents =
     currentView === Views.MONTH
       ? events.filter((e) => isSameMonth(e.start, currentDate))
@@ -202,44 +276,75 @@ export default function SchedulePage() {
   const startEdit = () => {
     setEditForm({
       scheduleType: selected.scheduleType,
-      startAt: selected.startAt.slice(0, 16),
+      startAt: toDateInputValue(selected.startAt),
       memo: selected.memo ?? "",
     });
     setIsEditing(true);
   };
 
+  const handleListNavigate = (action) => {
+    setCurrentDate((date) => {
+      if (action === "PREV") return subMonths(date, 1);
+      if (action === "NEXT") return addMonths(date, 1);
+      if (action === "TODAY") return new Date();
+      return date;
+    });
+  };
+
   return (
     <PageShell title="일정" description="전형 관련 일정을 달력에서 확인합니다." icon={CalendarDays}>
       <AsyncBoundary isLoading={isLoading} isError={isError} onRetry={refetch}>
-        <div className="h-[600px]">
-          <Calendar
-            localizer={localizer}
-            events={visibleEvents}
-            startAccessor="start"
-            endAccessor="end"
-            culture="ko"
-            formats={{ agendaDateFormat: (date) => format(date, "M월 d일 (eee)", { locale: ko }) }}
-            date={currentDate}
-            view={currentView}
-            onNavigate={setCurrentDate}
-            onView={setCurrentView}
-            views={[Views.MONTH, Views.WEEK, Views.AGENDA]}
-            messages={{
-              allDay: "종일",
-              date: "날짜",
-              time: "시간",
-              event: "일정",
-              noEventsInRange: "이 기간에 일정이 없습니다.",
-              showMore: (count) => `+${count}개 더`,
-            }}
-            components={{ event: EventCell, toolbar: CalendarToolbar }}
-            eventPropGetter={eventStyleGetter}
-            step={60}
-            timeslots={1}
-            onSelectEvent={handleSelectEvent}
-            style={{ height: "100%" }}
-          />
-        </div>
+        {currentView === Views.AGENDA ? (
+          <div>
+            <CalendarToolbar
+              date={currentDate}
+              view={currentView}
+              views={CALENDAR_VIEWS}
+              onNavigate={handleListNavigate}
+              onView={setCurrentView}
+            />
+            <MonthScheduleList
+              events={events}
+              currentDate={currentDate}
+              onSelect={handleSelectEvent}
+            />
+          </div>
+        ) : (
+          <div className="h-[600px]">
+            <Calendar
+              localizer={localizer}
+              events={visibleEvents}
+              startAccessor="start"
+              endAccessor="end"
+              culture="ko"
+              formats={{
+                eventTimeRangeFormat: () => "",
+              }}
+              date={currentDate}
+              view={currentView}
+              onNavigate={setCurrentDate}
+              onView={setCurrentView}
+              views={CALENDAR_VIEWS}
+              messages={{
+                allDay: "종일",
+                date: "날짜",
+                time: "",
+                event: "일정",
+                noEventsInRange: "이 기간에 일정이 없습니다.",
+                showMore: (count) => `+${count}개 더`,
+              }}
+              components={{
+                event: EventCell,
+                toolbar: CalendarToolbar,
+              }}
+              eventPropGetter={eventStyleGetter}
+              step={60}
+              timeslots={1}
+              onSelectEvent={handleSelectEvent}
+              style={{ height: "100%" }}
+            />
+          </div>
+        )}
 
         {selected && (
           <div className="mt-4 rounded-xl border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
@@ -248,7 +353,11 @@ export default function SchedulePage() {
                 form={editForm}
                 setForm={setEditForm}
                 onSave={() =>
-                  updateMutation.mutate({ scheduleId: selected.scheduleId, ...editForm })
+                  updateMutation.mutate({
+                    scheduleId: selected.scheduleId,
+                    ...editForm,
+                    startAt: toStartOfDayDateTime(editForm.startAt),
+                  })
                 }
                 onCancel={() => setIsEditing(false)}
                 isPending={updateMutation.isPending}
@@ -282,7 +391,7 @@ export default function SchedulePage() {
                   </div>
                 </div>
                 <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                  {formatDateTime(selected.startAt)}
+                  {formatScheduleDetailDate(selected.startAt)}
                 </p>
                 {selected.memo && (
                   <p className="text-xs text-zinc-400">{selected.memo}</p>
@@ -310,9 +419,10 @@ function EditScheduleRow({ form, setForm, onSave, onCancel, isPending }) {
           ))}
         </select>
         <input
-          type="datetime-local"
+          type="date"
           value={form.startAt}
           onChange={set("startAt")}
+          required
           className={inputCls}
         />
       </div>
@@ -323,7 +433,7 @@ function EditScheduleRow({ form, setForm, onSave, onCancel, isPending }) {
         className={`w-full ${inputCls}`}
       />
       <div className="flex gap-2">
-        <Button size="sm" icon={Save} disabled={isPending} onClick={onSave}>
+        <Button size="sm" icon={Save} disabled={isPending || !form.startAt} onClick={onSave}>
           {isPending ? "저장 중…" : "저장"}
         </Button>
         <Button variant="secondary" size="sm" icon={X} onClick={onCancel}>

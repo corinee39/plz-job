@@ -26,7 +26,7 @@ export default function JobPostingListPage() {
 
   const params = {
     page,
-    size: 20,
+    size: 10,
     ...(stage && { stage }),
     ...(company && { company }),
   };

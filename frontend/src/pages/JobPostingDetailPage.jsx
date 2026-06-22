@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Briefcase, Pencil, Save, X, Link2, Trash2, ArrowLeft, ArrowRight,
-  ExternalLink, NotebookPen, Sparkles,
+  ExternalLink, NotebookPen, Plus, Sparkles,
 } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
 import { Button, LinkButton } from "../components/common/Button";
@@ -21,6 +21,7 @@ import { getDocuments, getDocument, linkVersionToApplication, unlinkVersionFromA
 import { useCurrentUser } from "../features/auth/hooks";
 import { DdayBadge } from "../components/common/DdayBadge";
 import { stackMatch } from "../lib/jobMetrics";
+import { formatScheduleDate, toStartOfDayDateTime } from "../lib/scheduleDates";
 import { STAGE_CODES, SCHEDULE_TYPE_LABELS, DOCUMENT_TYPE_LABELS } from "../constants/stageCodes";
 
 const SCHEDULE_TYPE_COLORS = {
@@ -172,7 +173,7 @@ export default function JobPostingDetailPage() {
                   href={j.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline ml-auto"
+                  className="inline-flex shrink-0 items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   원문 공고 <ExternalLink size={12} />
                 </a>
@@ -544,12 +545,14 @@ function ScheduleSection({ appId }) {
     <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">일정</h2>
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={showForm ? X : Plus}
           onClick={() => setShowForm((v) => !v)}
-          className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
         >
-          {showForm ? "취소" : "+ 일정 추가"}
-        </button>
+          {showForm ? "취소" : "일정 추가"}
+        </Button>
       </div>
 
       {showForm && (
@@ -561,7 +564,7 @@ function ScheduleSection({ appId }) {
               ))}
             </select>
             <input
-              type="datetime-local"
+              type="date"
               value={form.startAt}
               onChange={set("startAt")}
               required
@@ -574,19 +577,20 @@ function ScheduleSection({ appId }) {
             onChange={set("memo")}
             className={`w-full ${inputCls}`}
           />
-          <button
+          <Button
+            size="sm"
+            icon={Plus}
             disabled={!form.startAt || createMutation.isPending}
             onClick={() =>
               createMutation.mutate({
                 scheduleType: form.scheduleType,
-                startAt: form.startAt,
+                startAt: toStartOfDayDateTime(form.startAt),
                 memo: form.memo || null,
               })
             }
-            className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-3 py-1.5 text-xs text-white dark:text-zinc-900 disabled:opacity-40"
           >
             {createMutation.isPending ? "등록 중…" : "등록"}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -608,28 +612,25 @@ function ScheduleSection({ appId }) {
                     {SCHEDULE_TYPE_LABELS[s.scheduleType] ?? s.scheduleType}
                   </span>
                   <span className="text-xs text-zinc-500">
-                    {new Date(s.startAt).toLocaleString("ko-KR", {
-                      month: "numeric",
-                      day: "numeric",
-                      weekday: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatScheduleDate(s.startAt)}
                   </span>
                 </div>
                 {s.memo && (
                   <p className="text-xs text-zinc-400">{s.memo}</p>
                 )}
               </div>
-              <button
+              <Button
+                variant="danger"
+                size="sm"
+                icon={Trash2}
                 disabled={deleteMutation.isPending}
                 onClick={() => {
                   if (confirm("이 일정을 삭제할까요?")) deleteMutation.mutate(s.scheduleId);
                 }}
-                className="mt-0.5 shrink-0 text-xs text-red-500 hover:text-red-700"
+                className="mt-0.5 shrink-0"
               >
                 삭제
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
