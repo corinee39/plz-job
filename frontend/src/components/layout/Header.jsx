@@ -5,7 +5,16 @@ import { useThemeStore } from "../../store/themeStore";
 // UI-03: 다크/라이트 모드 토글 아이콘
 function SunIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="12" r="5" />
       <line x1="12" y1="1" x2="12" y2="3" />
       <line x1="12" y1="21" x2="12" y2="23" />
@@ -21,7 +30,16 @@ function SunIcon() {
 
 function MoonIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     </svg>
   );
@@ -38,11 +56,15 @@ export function Header() {
       <div className="flex-1" />
       <div className="flex items-center gap-3">
         {user && (
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">{user.nickname}</span>
+          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            {user.nickname} 님
+          </span>
         )}
         <button
           onClick={toggleTheme}
-          aria-label={theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
+          aria-label={
+            theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"
+          }
           className="rounded-md border border-zinc-200 dark:border-zinc-700 p-1.5 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
         >
           {theme === "dark" ? <SunIcon /> : <MoonIcon />}

@@ -31,15 +31,29 @@ public class LlmClient {
     @Value("${llm.num-ctx:4096}")      private int numCtx;          // 컨텍스트 길이(작을수록 빠르고 가벼움)
     @Value("${llm.temperature:0.2}")   private double temperature;  // 낮을수록 JSON 형식을 안정적으로 따름 → 재시도 감소
 
-    @SuppressWarnings("unchecked")
+    /** format="json" — 단순히 유효한 JSON만 강제(스키마 미지정). */
     public String generateJson(String prompt) {
+        return generate(prompt, "json");
+    }
+
+    /**
+     * Ollama 구조화 출력(structured outputs) — format에 JSON 스키마를 넘겨
+     * 모델이 정확히 그 스키마(키·타입)만 따르도록 문법 제약한다. 작은 모델이
+     * 프롬프트 지시만으로 스키마를 못 맞추거나 입력을 그대로 echo 하는 문제를 방지.
+     */
+    public String generateJson(String prompt, Object schema) {
+        return generate(prompt, schema);
+    }
+
+    @SuppressWarnings("unchecked")
+    private String generate(String prompt, Object format) {
         try {
             Map<String, Object> res = rest.post().uri(baseUrl + "/api/generate")
                     .body(Map.of(
                             "model", model,
                             "prompt", prompt,
                             "stream", false,
-                            "format", "json",
+                            "format", format,
                             "keep_alive", keepAlive,
                             "options", Map.of(
                                     "temperature", temperature,
