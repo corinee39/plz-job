@@ -19,8 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -64,12 +62,10 @@ public class JobPostingService {
                 .build();
     }
 
-    public Page<JobPostingListItem> list(Long userId, ApplicationStage stage, Pageable pageable) {
+    public Page<JobPostingListItem> list(Long userId, ApplicationStage stage, String company, Pageable pageable) {
         User user = userRepository.getReferenceById(userId);
-        Page<Application> page = (stage != null)
-                ? applicationRepository.findByUserAndCurrentStage(user, stage, pageable)
-                : applicationRepository.findByUser(user, pageable);
-        return page.map(JobPostingListItem::from);
+        String keyword = (company != null && !company.isBlank()) ? company.trim() : null;
+        return applicationRepository.search(user, stage, keyword, pageable).map(JobPostingListItem::from);
     }
 
     public JobPostingDetailResponse getDetail(Long userId, Long jobPostingId) {

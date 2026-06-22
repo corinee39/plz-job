@@ -43,8 +43,9 @@ public class JobPostingController {
     public ResponseEntity<ApiResponse<PageResponse<JobPostingListItem>>> list(
             @LoginUserId Long userId,
             @RequestParam(required = false) ApplicationStage stage,
+            @RequestParam(required = false) String company,
             @PageableDefault(size = 20) Pageable pageable) {
-        var page = jobPostingService.list(userId, stage, pageable);
+        var page = jobPostingService.list(userId, stage, company, pageable);
         return ResponseEntity.ok(ApiResponse.ok(PageResponse.of(page, x -> x)));
     }
 
