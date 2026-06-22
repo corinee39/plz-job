@@ -131,7 +131,8 @@ export default function DocumentsPage() {
               description="왼쪽에서 문서를 선택하면 버전을 업로드하고 관리할 수 있습니다."
             />
           ) : (
-            <VersionPanel documentId={selectedId} detail={detail} />
+            // key로 문서 전환 시 패널을 새로 마운트 → 업로드 메시지·입력값이 이전 문서 것으로 남지 않게 한다.
+            <VersionPanel key={selectedId} documentId={selectedId} detail={detail} />
           )}
         </section>
       </div>

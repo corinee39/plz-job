@@ -175,6 +175,13 @@ export default function SchedulePage() {
     resource: s,
   }));
 
+  // 월 뷰에서는 인접 월(회색 처리된 날짜)의 일정은 표시하지 않는다.
+  // 주/목록 뷰는 "다른 월" 개념이 없으므로 전체를 그대로 보여준다.
+  const visibleEvents =
+    currentView === Views.MONTH
+      ? events.filter((e) => isSameMonth(e.start, currentDate))
+      : events;
+
   const eventStyleGetter = () => ({
     style: {
       backgroundColor: "transparent",
@@ -205,7 +212,7 @@ export default function SchedulePage() {
         <div className="h-[600px]">
           <Calendar
             localizer={localizer}
-            events={events}
+            events={visibleEvents}
             startAccessor="start"
             endAccessor="end"
             culture="ko"
