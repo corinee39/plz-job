@@ -54,4 +54,11 @@ public class DocumentController {
         documentService.linkToApplication(userId, applicationId, versionId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok());
     }
+
+    @DeleteMapping("/applications/{applicationId}/documents/{versionId}")
+    public ResponseEntity<ApiResponse<Void>> unlink(
+            @LoginUserId Long userId, @PathVariable Long applicationId, @PathVariable Long versionId) {
+        documentService.unlinkFromApplication(userId, applicationId, versionId);
+        return ResponseEntity.noContent().build();
+    }
 }
