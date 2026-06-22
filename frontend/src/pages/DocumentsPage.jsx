@@ -18,7 +18,7 @@ const MAX_SIZE = 10 * 1024 * 1024;
 const ALLOWED = ["application/pdf", "text/plain"];
 
 const inputCls =
-  "rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm bg-transparent";
+  "rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100";
 
 function formatBytes(bytes) {
   if (!bytes) return "0 B";
