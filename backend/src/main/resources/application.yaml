@@ -40,6 +40,10 @@ oauth:
 llm:
   base-url: ${LLM_BASE_URL:http://localhost:11435}
   model: ${LLM_MODEL:gemma3:4b}
+  keep-alive: ${LLM_KEEP_ALIVE:30m}     # 모델 상주 시간(콜드 스타트 방지). -1=무제한
+  num-predict: ${LLM_NUM_PREDICT:1024}  # 출력 토큰 상한
+  num-ctx: ${LLM_NUM_CTX:4096}          # 컨텍스트 길이
+  temperature: ${LLM_TEMPERATURE:0.2}   # 낮을수록 JSON 형식 안정 → 재시도 감소
 
 document:
   upload-dir: ${UPLOAD_DIR:./uploads}

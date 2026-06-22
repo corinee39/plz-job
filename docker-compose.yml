@@ -48,14 +48,14 @@ services:
       - "${OLLAMA_MODELS_DIR:-D:/data/ollama_data/models}:/root/.ollama/models"
     restart: unless-stopped
     networks: [plzjob-net]
-    # ── GPU 가속을 쓰려면 주석 해제 (NVIDIA Container Toolkit 필요) ──
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+    # ── GPU 가속 (NVIDIA Container Toolkit 필요). docker의 nvidia 런타임으로 RTX 4060 사용 ──
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
 volumes:
   oracle-data:

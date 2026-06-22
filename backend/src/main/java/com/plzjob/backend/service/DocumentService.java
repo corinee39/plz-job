@@ -112,6 +112,17 @@ public class DocumentService {
         applicationDocumentRepository.save(ApplicationDocument.builder().application(app).version(v).build());
     }
 
+    @Transactional
+    public void unlinkFromApplication(Long userId, Long applicationId, Long versionId) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new CustomException(ErrorCode.APPLICATION_NOT_FOUND));
+        if (!app.getUser().getId().equals(userId)) throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+        ApplicationDocument link = applicationDocumentRepository
+                .findByApplicationIdAndVersionId(app.getId(), versionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
+        applicationDocumentRepository.delete(link);
+    }
+
     private Document findOwnedDocument(Long userId, Long documentId) {
         User user = userRepository.getReferenceById(userId);
         return documentRepository.findByIdAndUser(documentId, user)
