@@ -10,6 +10,7 @@ import com.plzjob.backend.exception.CustomException;
 import com.plzjob.backend.exception.ErrorCode;
 import com.plzjob.backend.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.security.MessageDigest;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AiService {
@@ -101,12 +103,22 @@ public class AiService {
 
     private JsonNode callAndParse(String prompt, Predicate<JsonNode> valid) {
         for (int attempt = 1; attempt <= 2; attempt++) {
+            String raw = llmClient.generateJson(prompt);
             try {
-                JsonNode node = objectMapper.readTree(llmClient.generateJson(prompt));
+                JsonNode node = objectMapper.readTree(raw);
                 if (valid.test(node)) return node;
-            } catch (Exception ignored) { /* 다음 시도 */ }
+                log.warn("AI 응답 스키마 불일치(attempt {}/2): {}", attempt, snippet(raw));
+            } catch (Exception e) {
+                log.warn("AI 응답 JSON 파싱 실패(attempt {}/2): {} — raw={}", attempt, e.getMessage(), snippet(raw));
+            }
         }
         throw new CustomException(ErrorCode.LLM_PARSE_FAILED);
+    }
+
+    /** 로그용으로 응답 앞부분만(과도한 로그·민감정보 방지). */
+    private String snippet(String s) {
+        if (s == null) return "null";
+        return s.length() <= 500 ? s : s.substring(0, 500) + "...(" + s.length() + "자)";
     }
 
     private void ensureDisclaimer(JsonNode node) {

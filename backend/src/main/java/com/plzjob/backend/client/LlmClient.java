@@ -2,12 +2,14 @@ package com.plzjob.backend.client;
 
 import com.plzjob.backend.exception.CustomException;
 import com.plzjob.backend.exception.ErrorCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class LlmClient {
 
@@ -46,6 +48,8 @@ public class LlmClient {
                     .retrieve().body(Map.class);
             return res != null ? String.valueOf(res.get("response")) : "";
         } catch (Exception e) {
+            log.warn("LLM 호출 실패: url={}/api/generate, model={}, 원인={}: {}",
+                    baseUrl, model, e.getClass().getSimpleName(), e.getMessage());
             throw new CustomException(ErrorCode.LLM_UNAVAILABLE);
         }
     }

@@ -4,7 +4,10 @@
 #   docker compose up -d        # 백그라운드 기동
 #   docker compose ps           # (healthy) 확인 후 진행
 #   docker compose logs -f      # 로그
-#   docker compose down         # 중지 (데이터는 named volume에 보존)
+#   docker compose down         # 중지 (Oracle 데이터는 named volume에 보존)
+#   docker compose down -v      # ⚠ Oracle named volume(oracle-data)은 삭제됨.
+#                               #   단, Ollama 모델은 호스트 bind mount(아래 ollama.volumes)라
+#                               #   -v 로도 보존된다. 모델을 비우려면 그 호스트 폴더를 직접 지워야 한다.
 #
 # 포트 정책 (이 PC의 기존 컨테이너/프로세스와 충돌 방지)
 #   - Oracle  : 다른 Oracle 컨테이너(makeapp-oracle 등)가 1521을 쓰므로 → host 1522
