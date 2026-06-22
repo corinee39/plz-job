@@ -6,32 +6,12 @@ import { useFilterStore } from "../../store/filterStore";
 export const BRAND = "var(--color-brand)";
 export const MARKET = "var(--color-market)";
 
-// DASH-08: 필터 선택지
-export const PERIOD_OPTIONS = [
+// DASH-08: 기간 필터 선택지 (PeriodFilter 내부 전용)
+const PERIOD_OPTIONS = [
   { value: "1m", label: "1개월" },
   { value: "3m", label: "3개월" },
   { value: "6m", label: "6개월" },
   { value: "1y", label: "1년" },
-];
-
-export const POSITION_OPTIONS = [
-  { value: "", label: "전체 직무" },
-  { value: "백엔드", label: "백엔드" },
-  { value: "프론트엔드", label: "프론트엔드" },
-  { value: "풀스택", label: "풀스택" },
-  { value: "데이터", label: "데이터" },
-  { value: "AI", label: "AI" },
-  { value: "모바일", label: "모바일" },
-  { value: "DevOps", label: "DevOps" },
-];
-
-export const REGION_OPTIONS = [
-  { value: "", label: "전체 지역" },
-  { value: "서울", label: "서울" },
-  { value: "경기", label: "경기" },
-  { value: "부산", label: "부산" },
-  { value: "대전", label: "대전" },
-  { value: "인천", label: "인천" },
 ];
 
 // 기간 토글(세그먼트) — 두 대시보드 페이지 공용

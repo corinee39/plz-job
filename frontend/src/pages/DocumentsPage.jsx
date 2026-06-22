@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { FileText, FilePlus2, Upload, Download, Trash2, X } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
+import { Button } from "../components/common/Button";
 import { AsyncBoundary } from "../components/common/AsyncBoundary";
 import { EmptyState } from "../components/common/EmptyState";
 import {
@@ -59,6 +61,7 @@ export default function DocumentsPage() {
   return (
     <PageShell
       title="서류 관리"
+      icon={FileText}
       description="이력서·자기소개서를 업로드하고 버전을 관리합니다. (PDF, TXT / 최대 10MB)"
     >
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
@@ -110,10 +113,10 @@ export default function DocumentsPage() {
                           if (confirm(`'${d.title}'을 삭제할까요? 모든 버전도 함께 삭제됩니다.`))
                             deleteDocMutation.mutate(d.documentId);
                         }}
-                        className="px-2.5 py-2.5 text-zinc-400 hover:text-red-500 shrink-0 text-sm leading-none"
+                        className="flex items-center px-2.5 py-2.5 text-zinc-400 hover:text-red-500 shrink-0 disabled:opacity-40"
                         title="문서 삭제"
                       >
-                        ✕
+                        <X size={15} />
                       </button>
                     </div>
                   </li>
@@ -252,13 +255,9 @@ function VersionPanel({ documentId, detail }) {
             onChange={() => setUploadMsg(null)}
             className="text-sm text-zinc-600 dark:text-zinc-300 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-900 file:px-3 file:py-1.5 file:text-xs file:text-white dark:file:bg-zinc-100 dark:file:text-zinc-900"
           />
-          <button
-            type="submit"
-            disabled={upload.isPending}
-            className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
-          >
+          <Button type="submit" disabled={upload.isPending} icon={Upload}>
             {upload.isPending ? "업로드 중…" : "버전 업로드"}
-          </button>
+          </Button>
         </div>
         {uploadMsg && (
           <p
@@ -302,21 +301,20 @@ function VersionPanel({ documentId, detail }) {
                   )}
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <button
-                    onClick={() => handleDownload(v.versionId, v.fileName)}
-                    className="rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                  >
+                  <Button variant="secondary" size="sm" icon={Download} onClick={() => handleDownload(v.versionId, v.fileName)}>
                     다운로드
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    icon={Trash2}
                     disabled={removeVersion.isPending}
                     onClick={() => {
                       if (confirm("이 버전을 삭제할까요?")) removeVersion.mutate(v.versionId);
                     }}
-                    className="rounded-md border border-red-200 dark:border-red-900 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40"
                   >
                     삭제
-                  </button>
+                  </Button>
                 </div>
               </li>
             ))}
@@ -361,13 +359,9 @@ function CreateDocForm({ onCreate, pending }) {
           className={`flex-1 min-w-0 ${inputCls}`}
         />
       </div>
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40"
-      >
-        {pending ? "만드는 중…" : "+ 문서 만들기"}
-      </button>
+      <Button type="submit" variant="secondary" disabled={pending} icon={FilePlus2} className="w-full">
+        {pending ? "만드는 중…" : "문서 만들기"}
+      </Button>
     </form>
   );
 }

@@ -5,7 +5,9 @@ import {
   LineChart, Line,
 } from "recharts";
 import { Link } from "react-router-dom";
+import { ClipboardList, Sparkles } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
+import { Button } from "../components/common/Button";
 import { AsyncBoundary } from "../components/common/AsyncBoundary";
 import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
 import { EmptyState } from "../components/common/EmptyState";
@@ -34,8 +36,8 @@ const FUNNEL_LABELS = {
   FINAL: "최종",
 };
 
-// 퍼널 단계별 brand 농도 그라데이션(위→아래로 옅어짐)
-const FUNNEL_COLORS = ["#4f46e5", "#6366f1", "#818cf8", "#a5b4fc", "#c7d2fe"];
+// 퍼널 단계별 라벤더 파스텔 그라데이션(위→아래로 옅어짐)
+const FUNNEL_COLORS = ["#a78bfa", "#bba7fb", "#c8b9fd", "#dcd5fe", "#ece9fe"];
 
 // UI-02: 대시보드(지원 현황) — DASH-01·02·03, AI-05
 export default function DashboardPage() {
@@ -62,6 +64,7 @@ export default function DashboardPage() {
   return (
     <PageShell
       title="지원 현황"
+      icon={ClipboardList}
       description="내 지원 현황과 진행 상황을 한눈에 확인합니다."
     >
       {/* DASH-08: 기간 필터 */}
@@ -103,7 +106,6 @@ export default function DashboardPage() {
         {/* DASH-01: 월별 지원 추이 */}
         <ChartCard
           title="월별 지원 추이"
-          badge="DASH-01"
           isLoading={monthly.isLoading}
           isError={monthly.isError}
           onRetry={monthly.refetch}
@@ -131,7 +133,6 @@ export default function DashboardPage() {
         {/* DASH-02·03: 단계별 통과율 */}
         <ChartCard
           title="단계별 통과율"
-          badge="DASH-02·03"
           isLoading={stages.isLoading}
           isError={stages.isError}
           onRetry={stages.refetch}
@@ -156,7 +157,7 @@ export default function DashboardPage() {
                 />
                 <Funnel dataKey="count" data={stageData} isAnimationActive>
                   <LabelList position="right" dataKey="name" fontSize={11} fill="#71717a" />
-                  <LabelList position="inside" dataKey="count" fontSize={11} fill="#fff" />
+                  <LabelList position="inside" dataKey="count" fontSize={11} fill="#3f3f46" />
                   {stageData.map((s) => (
                     <Cell key={s.stage} fill={s.fill} />
                   ))}
@@ -174,13 +175,9 @@ export default function DashboardPage() {
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">AI 분석 리포트</p>
-          <button
-            onClick={handleAiReport}
-            disabled={reportMutation.isPending}
-            className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-3 py-1.5 text-xs text-white dark:text-zinc-900 hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
+          <Button onClick={handleAiReport} disabled={reportMutation.isPending} size="sm" icon={Sparkles}>
             {reportMutation.isPending ? "분석 중..." : "AI 분석하기"}
-          </button>
+          </Button>
         </div>
 
         {!reportMutation.data && !reportMutation.isPending && !reportMutation.isError && (

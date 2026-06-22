@@ -5,8 +5,10 @@ import { PageShell } from "../components/layout/PageShell";
 import { AsyncBoundary } from "../components/common/AsyncBoundary";
 import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
 import { EmptyState } from "../components/common/EmptyState";
+import { Columns3, List } from "lucide-react";
 import { DdayBadge } from "../components/common/DdayBadge";
 import { StageBadge } from "../components/common/StageBadge";
+import { LinkButton } from "../components/common/Button";
 import { getJobPostings, changeStage } from "../features/jobPostings/api";
 import { STAGE_PHASES } from "../constants/stageCodes";
 
@@ -65,15 +67,13 @@ export default function JobBoardPage() {
   return (
     <PageShell
       title="지원 보드"
+      icon={Columns3}
       description="카드를 드래그해 단계를 진행합니다. 합격·불합격 등 세부 상태는 카드 배지로 표시되며, 정확한 변경은 상세 페이지에서 합니다."
     >
       <div className="flex justify-end">
-        <Link
-          to="/job-postings"
-          className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800"
-        >
-          목록 보기 →
-        </Link>
+        <LinkButton to="/job-postings" variant="secondary" size="sm" icon={List}>
+          목록 보기
+        </LinkButton>
       </div>
 
       <AsyncBoundary

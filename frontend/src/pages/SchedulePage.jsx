@@ -4,7 +4,9 @@ import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay, isSameMonth, startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns";
 import { ko } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { CalendarDays, Pencil, Trash2, X, Save } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
+import { Button } from "../components/common/Button";
 import { AsyncBoundary } from "../components/common/AsyncBoundary";
 import { getSchedules, updateSchedule, deleteSchedule } from "../features/schedules/api";
 import { SCHEDULE_TYPE_LABELS } from "../constants/stageCodes";
@@ -207,7 +209,7 @@ export default function SchedulePage() {
   };
 
   return (
-    <PageShell title="일정" description="전형 관련 일정을 달력에서 확인합니다.">
+    <PageShell title="일정" description="전형 관련 일정을 달력에서 확인합니다." icon={CalendarDays}>
       <AsyncBoundary isLoading={isLoading} isError={isError} onRetry={refetch}>
         <div className="h-[600px]">
           <Calendar
@@ -259,28 +261,24 @@ export default function SchedulePage() {
                     <span className="text-sm font-medium">{selected.companyName}</span>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <button
-                      onClick={startEdit}
-                      className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                    >
+                    <Button variant="secondary" size="sm" icon={Pencil} onClick={startEdit}>
                       수정
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      icon={Trash2}
                       disabled={deleteMutation.isPending}
                       onClick={() => {
                         if (confirm("이 일정을 삭제할까요?"))
                           deleteMutation.mutate(selected.scheduleId);
                       }}
-                      className="rounded-md border border-red-200 dark:border-red-900 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40"
                     >
                       삭제
-                    </button>
-                    <button
-                      onClick={() => setSelected(null)}
-                      className="rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                    >
+                    </Button>
+                    <Button variant="ghost" size="sm" icon={X} onClick={() => setSelected(null)}>
                       닫기
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <p className="text-sm text-zinc-600 dark:text-zinc-300">
@@ -325,19 +323,12 @@ function EditScheduleRow({ form, setForm, onSave, onCancel, isPending }) {
         className={`w-full ${inputCls}`}
       />
       <div className="flex gap-2">
-        <button
-          disabled={isPending}
-          onClick={onSave}
-          className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-3 py-1.5 text-xs text-white dark:text-zinc-900 disabled:opacity-40"
-        >
+        <Button size="sm" icon={Save} disabled={isPending} onClick={onSave}>
           {isPending ? "저장 중…" : "저장"}
-        </button>
-        <button
-          onClick={onCancel}
-          className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800"
-        >
+        </Button>
+        <Button variant="secondary" size="sm" icon={X} onClick={onCancel}>
           취소
-        </button>
+        </Button>
       </div>
     </div>
   );

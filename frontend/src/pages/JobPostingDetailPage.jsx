@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Briefcase, Pencil, Save, X, Link2, Trash2, ArrowLeft, ArrowRight,
+  ExternalLink, NotebookPen, Sparkles,
+} from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
+import { Button, LinkButton } from "../components/common/Button";
 import { StageBadge } from "../components/common/StageBadge";
 import { ErrorState } from "../components/common/ErrorState";
 import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
@@ -115,6 +120,7 @@ export default function JobPostingDetailPage() {
   return (
     <PageShell
       title={`${j.companyName} — ${j.title}`}
+      icon={Briefcase}
       description={[j.position, j.region].filter(Boolean).join(" · ")}
     >
       {/* 공고 기본 정보 */}
@@ -140,20 +146,12 @@ export default function JobPostingDetailPage() {
               />
             </div>
             <div className="flex gap-2 pt-1">
-              <button
-                type="submit"
-                disabled={editMutation.isPending}
-                className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
-              >
+              <Button type="submit" disabled={editMutation.isPending} icon={Save}>
                 {editMutation.isPending ? "저장 중…" : "저장"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsEditingInfo(false)}
-                className="rounded-md border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm"
-              >
+              </Button>
+              <Button type="button" variant="secondary" icon={X} onClick={() => setIsEditingInfo(false)}>
                 취소
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
@@ -174,16 +172,16 @@ export default function JobPostingDetailPage() {
                   href={j.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-auto"
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline ml-auto"
                 >
-                  원문 공고 ↗
+                  원문 공고 <ExternalLink size={12} />
                 </a>
               )}
               <button
                 onClick={() => startEdit(j)}
-                className="text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 ml-auto"
+                className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 ml-auto"
               >
-                수정 ✎
+                <Pencil size={13} /> 수정
               </button>
             </div>
             {j.techStacks?.length > 0 && (
@@ -230,13 +228,14 @@ export default function JobPostingDetailPage() {
             placeholder="메모 (선택)"
             className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm bg-transparent flex-1"
           />
-          <button
+          <Button
             disabled={!toStage || stageMutation.isPending}
             onClick={() => stageMutation.mutate()}
-            className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40 shrink-0"
+            icon={ArrowRight}
+            className="shrink-0"
           >
             {stageMutation.isPending ? "변경 중…" : "변경"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -295,12 +294,9 @@ export default function JobPostingDetailPage() {
           <h2 className="text-sm font-semibold">회고</h2>
           <p className="mt-0.5 text-xs text-zinc-500">코딩테스트·면접 회고를 기록합니다.</p>
         </div>
-        <Link
-          to={`/job-postings/${id}/retrospectives`}
-          className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800"
-        >
-          회고 보기 →
-        </Link>
+        <LinkButton to={`/job-postings/${id}/retrospectives`} variant="secondary" size="sm" icon={NotebookPen}>
+          회고 보기
+        </LinkButton>
       </div>
 
       {/* AI 면접 질문 링크 (Phase 6) */}
@@ -309,21 +305,15 @@ export default function JobPostingDetailPage() {
           <h2 className="text-sm font-semibold">AI 면접 준비</h2>
           <p className="mt-0.5 text-xs text-zinc-500">예상 면접 질문을 AI로 생성합니다.</p>
         </div>
-        <Link
-          to={`/job-postings/${id}/interview-ai`}
-          className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800"
-        >
-          질문 생성 →
-        </Link>
+        <LinkButton to={`/job-postings/${id}/interview-ai`} size="sm" icon={Sparkles}>
+          질문 생성
+        </LinkButton>
       </div>
 
       <div className="flex justify-between">
-        <button
-          onClick={() => navigate("/job-postings")}
-          className="rounded-md border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm"
-        >
-          ← 목록으로
-        </button>
+        <Button variant="secondary" icon={ArrowLeft} onClick={() => navigate("/job-postings")}>
+          목록으로
+        </Button>
       </div>
     </PageShell>
   );
@@ -459,9 +449,9 @@ function SubmittedDocumentsSection({ appId, jobPostingId, submittedDocuments }) 
                   if (confirm(`'${d.documentTitle}' 문서를 제출 목록에서 삭제할까요?`))
                     unlinkMutation.mutate(d.versionId);
                 }}
-                className="ml-auto shrink-0 text-xs text-red-500 hover:text-red-700 disabled:opacity-40"
+                className="ml-auto inline-flex shrink-0 items-center gap-1 text-xs text-red-500 hover:text-red-700 disabled:opacity-40"
               >
-                삭제
+                <Trash2 size={13} /> 삭제
               </button>
             </li>
           ))}
@@ -497,13 +487,14 @@ function SubmittedDocumentsSection({ appId, jobPostingId, submittedDocuments }) 
             </option>
           ))}
         </select>
-        <button
+        <Button
+          size="sm"
+          icon={Link2}
           disabled={!versionId || linkMutation.isPending}
           onClick={() => linkMutation.mutate()}
-          className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-3 py-1.5 text-xs text-white dark:text-zinc-900 disabled:opacity-40"
         >
           {linkMutation.isPending ? "연결 중…" : "연결"}
-        </button>
+        </Button>
       </div>
     </div>
   );

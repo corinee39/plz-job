@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Sparkles, RefreshCw } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
+import { Button } from "../components/common/Button";
 import { AiDisclaimerBadge } from "../components/common/AiDisclaimerBadge";
 import { ErrorState } from "../components/common/ErrorState";
 import { LoadingSkeleton } from "../components/common/LoadingSkeleton";
@@ -109,6 +111,7 @@ export default function InterviewAiPage() {
   return (
     <PageShell
       title="AI 면접 준비"
+      icon={Sparkles}
       description="공고와 제출 서류를 바탕으로 예상 면접 질문을 생성합니다."
     >
       {/* 문서·버전 선택 */}
@@ -157,21 +160,22 @@ export default function InterviewAiPage() {
         )}
 
         <div className="flex gap-2">
-          <button
+          <Button
             disabled={!versionId || generate.isPending}
             onClick={() => generate.mutate({ regenerate: false })}
-            className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
+            icon={Sparkles}
           >
             {generate.isPending ? "생성 중…" : "예상 질문 생성하기"}
-          </button>
+          </Button>
           {result && (
-            <button
+            <Button
+              variant="secondary"
               disabled={generate.isPending}
               onClick={() => generate.mutate({ regenerate: true })}
-              className="rounded-md border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm disabled:opacity-40"
+              icon={RefreshCw}
             >
               재생성
-            </button>
+            </Button>
           )}
         </div>
 

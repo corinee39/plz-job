@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { User, Save, Check } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
 import { AsyncBoundary } from "../components/common/AsyncBoundary";
+import { Button } from "../components/common/Button";
 import { useCurrentUser, useUpdateProfile } from "../features/auth/hooks";
 
 const inputCls =
@@ -11,7 +13,7 @@ export default function ProfilePage() {
   const { data: user, isLoading, isError, refetch } = useCurrentUser();
 
   return (
-    <PageShell title="프로필" description="닉네임, 희망 직무/지역, 주요 기술 스택을 관리합니다.">
+    <PageShell title="프로필" description="닉네임, 희망 직무/지역, 주요 기술 스택을 관리합니다." icon={User}>
       <AsyncBoundary isLoading={isLoading} isError={isError} onRetry={refetch}>
         {/* key로 user 도착 시 폼을 초기값으로 리셋한다 (useEffect 없이) */}
         <ProfileForm key={user?.userId} user={user} />
@@ -90,15 +92,13 @@ function ProfileForm({ user }) {
       />
 
       <div className="flex items-center gap-3 pt-1">
-        <button
-          type="submit"
-          disabled={save.isPending}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900 disabled:opacity-40"
-        >
+        <Button type="submit" disabled={save.isPending} icon={Save}>
           {save.isPending ? "저장 중…" : "저장"}
-        </button>
+        </Button>
         {saved && !save.isPending && (
-          <span className="text-sm text-green-600 dark:text-green-400">저장되었습니다.</span>
+          <span className="inline-flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
+            <Check size={15} /> 저장되었습니다.
+          </span>
         )}
       </div>
     </form>

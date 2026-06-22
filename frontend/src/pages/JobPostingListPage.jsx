@@ -1,7 +1,9 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Briefcase, Columns3, Plus, Trash2 } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
+import { LinkButton } from "../components/common/Button";
 import { StageBadge } from "../components/common/StageBadge";
 import { EmptyState } from "../components/common/EmptyState";
 import { ErrorState } from "../components/common/ErrorState";
@@ -65,7 +67,7 @@ export default function JobPostingListPage() {
   };
 
   return (
-    <PageShell title="공고 목록" description="내가 등록한 지원 공고를 관리합니다.">
+    <PageShell title="공고 목록" description="내가 등록한 지원 공고를 관리합니다." icon={Briefcase}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2">
           <select
@@ -86,18 +88,12 @@ export default function JobPostingListPage() {
           />
         </div>
         <div className="flex gap-2">
-          <Link
-            to="/board"
-            className="rounded-md border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm text-center hover:bg-zinc-50 dark:hover:bg-zinc-800"
-          >
+          <LinkButton to="/board" variant="secondary" icon={Columns3}>
             보드 보기
-          </Link>
-          <Link
-            to="/job-postings/new"
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900 text-center"
-          >
-            + 공고 등록
-          </Link>
+          </LinkButton>
+          <LinkButton to="/job-postings/new" icon={Plus}>
+            공고 등록
+          </LinkButton>
         </div>
       </div>
 
@@ -194,9 +190,10 @@ export default function JobPostingListPage() {
                           if (confirm(`'${j.companyName} — ${j.title}' 공고를 삭제할까요?`))
                             deleteMutation.mutate(j.jobPostingId);
                         }}
-                        className="rounded-md border border-red-200 dark:border-red-900 px-2.5 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40"
+                        className="inline-flex items-center gap-1 rounded-md border border-red-200 dark:border-red-900 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40 transition-colors"
+                        title="공고 삭제"
                       >
-                        삭제
+                        <Trash2 size={13} /> 삭제
                       </button>
                     </td>
                   </tr>

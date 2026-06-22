@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FilePlus2, Wand2, Plus, X } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
+import { Button } from "../components/common/Button";
 import { usePreviewJobPosting, useCreateJobPosting } from "../features/jobPostings/hooks";
 import { STAGE_CODES } from "../constants/stageCodes";
 
@@ -77,7 +79,7 @@ export default function JobPostingFormPage() {
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
-    <PageShell title="공고 등록" description="공고 URL을 입력하면 정보를 자동으로 채웁니다.">
+    <PageShell title="공고 등록" description="공고 URL을 입력하면 정보를 자동으로 채웁니다." icon={FilePlus2}>
       {/* URL 자동 입력 영역 */}
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
         <label className="block text-sm font-medium">공고 URL</label>
@@ -89,14 +91,14 @@ export default function JobPostingFormPage() {
             placeholder="https://careers.example.com/jobs/123"
             className="flex-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm bg-transparent"
           />
-          <button
-            type="button"
+          <Button
             disabled={!urlInput || preview.isPending}
             onClick={handlePreview}
-            className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
+            icon={Wand2}
+            className="shrink-0"
           >
             {preview.isPending ? "불러오는 중…" : "자동으로 채우기"}
-          </button>
+          </Button>
         </div>
 
         {extractInfo && (
@@ -169,20 +171,12 @@ export default function JobPostingFormPage() {
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="rounded-md border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm"
-          >
+          <Button variant="secondary" onClick={() => navigate(-1)} icon={X}>
             취소
-          </button>
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
-          >
+          </Button>
+          <Button type="submit" disabled={create.isPending} icon={Plus}>
             {create.isPending ? "저장 중…" : "등록"}
-          </button>
+          </Button>
         </div>
       </form>
     </PageShell>

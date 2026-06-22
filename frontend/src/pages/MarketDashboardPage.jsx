@@ -2,6 +2,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer,
 } from "recharts";
+import { TrendingUp } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
 import { EmptyState } from "../components/common/EmptyState";
 import {
@@ -35,6 +36,7 @@ export default function MarketDashboardPage() {
   return (
     <PageShell
       title="시장 데이터"
+      icon={TrendingUp}
       description="시장 채용 동향과 내 지원을 비교합니다."
     >
       {/* DASH-08: 기간 필터 */}

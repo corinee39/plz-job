@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { NotebookPen, Plus, Pencil, Trash2 } from "lucide-react";
 import { PageShell } from "../components/layout/PageShell";
+import { Button } from "../components/common/Button";
 import { AsyncBoundary } from "../components/common/AsyncBoundary";
 import { getJobPosting } from "../features/jobPostings/api";
 import {
@@ -73,6 +75,7 @@ export default function RetrospectivePage() {
   return (
     <PageShell
       title="회고"
+      icon={NotebookPen}
       description={
         jobQuery.data
           ? `${jobQuery.data.companyName} — ${jobQuery.data.title}`
@@ -108,7 +111,8 @@ export default function RetrospectivePage() {
           rows={2}
           className={textareaCls}
         />
-        <button
+        <Button
+          icon={Plus}
           disabled={!form.content.trim() || createMutation.isPending}
           onClick={() =>
             createMutation.mutate({
@@ -118,10 +122,9 @@ export default function RetrospectivePage() {
               improvement: form.improvement.trim() || null,
             })
           }
-          className="rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm text-white dark:text-zinc-900 disabled:opacity-40"
         >
           {createMutation.isPending ? "저장 중…" : "회고 추가"}
-        </button>
+        </Button>
       </div>
 
       {/* 회고 목록 */}
@@ -169,9 +172,9 @@ export default function RetrospectivePage() {
                               improvement: r.improvement ?? "",
                             });
                           }}
-                          className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                          className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                         >
-                          수정
+                          <Pencil size={13} /> 수정
                         </button>
                         <button
                           disabled={deleteMutation.isPending}
@@ -179,9 +182,9 @@ export default function RetrospectivePage() {
                             if (confirm("이 회고를 삭제할까요?"))
                               deleteMutation.mutate(r.retrospectiveId);
                           }}
-                          className="text-xs text-red-500 hover:text-red-700"
+                          className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
                         >
-                          삭제
+                          <Trash2 size={13} /> 삭제
                         </button>
                       </div>
                     </div>

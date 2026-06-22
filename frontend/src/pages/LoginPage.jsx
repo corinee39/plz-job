@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Sparkles, LogIn } from "lucide-react";
 import { getOAuthUrl } from "../features/auth/api.js";
 
 // AUTH-01: 카카오·구글 소셜 로그인 (§12.1 OAuth 리다이렉트 방식)
@@ -43,7 +44,10 @@ export default function LoginPage() {
     <div className="flex flex-1 items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6 rounded-xl border border-zinc-200 dark:border-zinc-800 p-8 text-center shadow-sm">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Plz-Job</h1>
+          <h1 className="flex items-center justify-center gap-2 text-2xl font-bold tracking-tight">
+            <Sparkles size={24} className="text-brand" strokeWidth={2.2} />
+            Plz-Job
+          </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             취업 공고와 지원 기록을 한곳에서 관리하고,
             <br />
@@ -63,8 +67,9 @@ export default function LoginPage() {
               key={p.key}
               onClick={() => handleLogin(p.key)}
               disabled={loadingProvider !== null}
-              className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${p.className}`}
+              className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${p.className}`}
             >
+              <LogIn size={16} />
               {loadingProvider === p.key ? "연결 중..." : p.label}
             </button>
           ))}
