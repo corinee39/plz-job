@@ -17,4 +17,12 @@ public class WebConfig implements WebMvcConfigurer {
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
         resolvers.add(resolver);
     }
+
+    @Override
+    public void addViewControllers(org.springframework.web.servlet.config.annotation.ViewControllerRegistry registry) {
+        registry.addViewController("/{spring:[^\\.]*}")
+            .setViewName("forward:/index.html");
+        registry.addViewController("/**/{spring:[^\\.]*}")
+            .setViewName("forward:/index.html");
+}
 }
