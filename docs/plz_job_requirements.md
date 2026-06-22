@@ -11,7 +11,7 @@
 | Front-End | React + JavaScript |
 | Back-End | Spring Boot |
 | Database | Oracle |
-| 데이터 분석 | Python, Pandas, BeautifulSoup |
+| 데이터 분석 | Python, Pandas, BeautifulSoup, Hadoop HDFS(원본 적재), oracledb(집계 적재) |
 | 로컬 AI | Ollama 기반 로컬 LLM |
 | 외부 데이터 | 사람인(saramin.co.kr) 채용 공고 정적 크롤링 |
 | 문서 목적 | 프로젝트 범위, 기능, 데이터, 보안, AI, ETL, 시각화 및 완료 기준 정의 |
@@ -62,8 +62,8 @@
 | 상 | 대시보드 | 월별 지원 수, 단계별 전환 현황, 합격률, 기술 스택, 지역별 채용 데이터 |
 | 상 | LLM 면접 질문 생성 | 공고 내용과 업로드 문서를 바탕으로 예상 질문 및 꼬리질문 생성 |
 | 상 | LLM 차트 해석 | 대시보드 집계 데이터를 자연어 리포트로 생성 |
-| 상 | 시장 데이터 크롤링 ETL | 사람인 정적 크롤링 → pandas 태깅(스택·지역·직무) → CSV 누적 → 마감 필터링 → 집계 |
-| 상 | 대시보드 데이터 연동 | 집계 결과를 프론트가 읽는 JSON으로 export하고 MSW가 차트에 서빙(백엔드·Oracle 미경유) |
+| 상 | 시장 데이터 크롤링 ETL | 사람인 정적 크롤링 → pandas 태깅(스택·지역·직무) → CSV 누적 → 마감 필터링 → 집계 → Oracle `analytics_*` 적재 |
+| 상 | 대시보드 데이터 연동 | ETL 집계 결과를 Oracle `analytics_*`에 적재하고 Spring Boot가 `/api/market/*`로 서빙, React가 실 API로 차트에 표시 |
 | 중 | 지원 서류 버전 관리 | PDF 또는 TXT 업로드, 버전명·업로드일·공고 연결 관리 |
 | 중 | 회고 기록 | 코딩테스트·면접 유형별 회고 CRUD |
 | 중 | 전형 일정 | 전형 예정일 등록 및 월간 또는 목록형 일정 표시 |
@@ -124,7 +124,7 @@
 2. 크롤링 원본은 누적 CSV(`raw_jobs.csv`)에 저장한다(공고 식별자 기준 중복 제거).
 3. 사전(dict) 기반으로 기술 스택·지역·직무를 태깅하고, 마감일을 파싱해 유효 공고만 남긴다.
 4. 유효 공고를 기준으로 기술 스택·지역별 집계 데이터를 생성한다.
-5. 집계 결과를 프론트가 읽는 JSON으로 export하고, React 대시보드가 이를 차트로 표시한다.
+5. 집계 결과를 Oracle `analytics_*` 테이블에 적재하고, Spring Boot가 `/api/market/*`로 제공하면 React 대시보드가 이를 차트로 표시한다.
 6. 사용자가 `AI 분석하기`를 선택하면 차트의 수치와 비교 데이터를 Ollama가 해석한다.
 
 ---
@@ -287,7 +287,7 @@ LLM에는 전체 원본 데이터가 아니라 서버에서 계산한 다음 집
 | ETL-03 | 크롤링 원본은 누적 CSV로 저장한다. | 상 | 회차마다 덮어쓰지 않고 공고 식별자 기준으로 누적·갱신된다. |
 | ETL-04 | 태깅 결과(스택·지역·직무·마감)를 CSV로 저장한다. | 상 | 누적 원본 전체에 대해 재태깅된 결과가 저장된다. |
 | ETL-05 | 기술 스택·지역별 집계 결과를 생성한다. | 상 | 마감되지 않은(유효) 공고만 집계 대상으로 사용한다. |
-| ETL-06 | 집계 결과를 프론트가 읽는 JSON으로 export한다. | 상 | React 대시보드(MSW)가 해당 JSON을 조회할 수 있다. |
+| ETL-06 | 집계 결과를 Oracle `analytics_*` 테이블에 적재한다(`oracle_loader.py`). | 상 | Spring Boot `/api/market/*`가 적재값을 조회해 대시보드에 서빙한다. (백엔드 없이 단독 구동용 `market.json`/MSW 산출물도 함께 export하나 현행 앱에서는 미사용) |
 | ETL-07 | ETL 실행 결과를 로그로 저장한다. | 상 | 수집 건수, 누적 건수, 유효 공고 수가 기록된다. |
 | ETL-08 | 같은 공고를 다시 수집해도 중복 적재되지 않는다. | 상 | 공고 식별자(rec_idx) 또는 회사명·제목 조합 기준으로 최신 수집일 행만 남긴다. |
 | ETL-09 | 일부 페이지·키워드 수집 실패 시 기존 누적 데이터는 유지한다. | 상 | 차단·구조 변경으로 빈 결과가 와도 전체 파이프라인이 중단되지 않는다. |
@@ -316,10 +316,15 @@ LLM에는 전체 원본 데이터가 아니라 서버에서 계산한 다음 집
 [마감 미도래(유효) 공고만 선별]
             ↓ Aggregate
 [기술 스택·지역별 집계]
-            ↓ Export
-[frontend/src/mocks/data/market.json]
-            ↓
-[React 대시보드(MSW) 동적 차트]
+            ↓ Load (oracle_loader.py)
+[Oracle analytics_* / market_* / etl_runs]
+            ↓ 조회 (MarketService / DashboardController)
+[Spring Boot /api/market/*]
+            ↓ REST(Vite 프록시)
+[React 대시보드 동적 차트]
+
+* 같은 집계를 frontend/src/mocks/data/market.json 으로도 export하지만,
+  이는 백엔드 없이 프론트 단독 구동(MSW)용 산출물이며 현행 앱에서는 미사용.
 ```
 
 ### 산출 파일 구조 예시
@@ -329,7 +334,8 @@ etl/data/output/raw_jobs.csv                   크롤링 원본(누적)
 etl/data/output/enriched_jobs.csv              태깅 + 마감 정보(누적)
 etl/data/output/market_stack_trends.csv        DASH-04 집계
 etl/data/output/market_region_distribution.csv DASH-05 집계
-frontend/src/mocks/data/market.json            프론트 연동 데이터
+(Oracle) analytics_*/market_*/etl_runs         BE 조회용 적재 결과(정식 경로)
+frontend/src/mocks/data/market.json            프론트 단독 구동(MSW)용, 현행 앱 미사용
 ```
 
 ### 전처리 규칙
@@ -406,27 +412,31 @@ frontend/src/mocks/data/market.json            프론트 연동 데이터
 React Front-End
    ├─ 인증 화면
    ├─ 공고·서류·회고 CRUD
-   ├─ 대시보드 차트 (시장 데이터는 MSW가 market.json 서빙)
+   ├─ 대시보드 차트(개인 지표 + 시장 지표 모두 /api 로 조회)
    └─ AI 결과 화면
-          ↓ REST API(개인 도메인)        ↑ 정적 JSON(시장 데이터)
-Spring Boot Back-End                  Python ETL(독립 실행)
-   ├─ Spring Security                    ├─ 사람인 크롤링(requests+BeautifulSoup)
-   ├─ 사용자·공고·서류·일정·회고 API           ├─ pandas 태깅(스택/지역/직무) + 마감 필터링
-   ├─ 파일 처리                            ├─ 기술 스택·지역별 집계
-   ├─ URL 파싱                            └─ frontend/src/mocks/data/market.json export
-   └─ Ollama Client
-       ↓                ↓
-    Oracle            Ollama
- 업무 데이터(개인)      질문·리포트 생성
+          ↓ REST API(/api, Vite 프록시 → :8080)
+Spring Boot Back-End                       Python ETL(독립 실행)
+   ├─ Spring Security                         ├─ 사람인 크롤링(requests+BeautifulSoup)
+   ├─ 사용자·공고·서류·일정·회고 API              ├─ pandas 태깅(스택/지역/직무) + 마감 필터링
+   ├─ 파일 처리                                ├─ 기술 스택·지역별 집계
+   ├─ URL 파싱                                └─ oracle_loader: Oracle analytics_*/market_* 적재
+   ├─ 시장·대시보드 조회(analytics_* 읽기)              │
+   └─ Ollama Client                                   │
+       ↓            ↓                                  │
+    Oracle  ◀───────┼──────────────────────────────────┘ (적재)
+   ├─ 개인 도메인(쓰기: BE)
+   └─ 시장·분석 analytics_*/market_*/etl_runs(쓰기: ETL, 읽기: BE)
+                    ↓
+                 Ollama  질문·리포트 생성
 ```
 
 ### 구성 원칙
 
-- Oracle: 사용자(개인) 서비스 도메인 데이터 저장. 시장·분석 데이터는 적재하지 않는다.
-- Python ETL: 사람인 크롤링·정제·집계를 독립적으로 수행하고 결과를 JSON으로 export(백엔드·Oracle 미경유)
-- Spring Boot: 인증, 개인 도메인 비즈니스 로직, 데이터 제공, Ollama 연동 담당
-- React: 사용자 입력, 동적 시각화(개인 API + 시장 JSON), AI 결과 표현 담당
-- Ollama: 수치 계산이 아닌 문서 기반 질문 생성과 분석 문장 생성 담당
+- Oracle: 개인 서비스 도메인(BE 쓰기) + 시장·분석 집계(ETL 쓰기·BE 읽기)를 한 스키마에 둔다. BE는 `analytics_*`를 읽기 전용으로만 조회한다.
+- Python ETL: 사람인 크롤링·정제·집계를 독립 실행하고 결과를 Oracle `analytics_*`/`market_*`/`etl_runs`에 적재한다(`oracle_loader.py`). 동일 집계를 `market.json`으로도 export하나 이는 프론트 단독 구동(MSW)용이며 현행 앱은 미사용.
+- Spring Boot: 인증, 개인 도메인 비즈니스 로직, 시장·대시보드 집계 조회, Ollama 연동을 담당한다.
+- React: 사용자 입력, 동적 시각화(개인·시장 지표 모두 `/api` 호출), AI 결과 표현을 담당한다.
+- Ollama: 수치 계산이 아닌 문서 기반 질문 생성과 분석 문장 생성을 담당한다.
 
 ---
 
@@ -455,7 +465,7 @@ Spring Boot Back-End                  Python ETL(독립 실행)
 | analytics_region_jobs | 지역별 집계 | base_month, region, posting_count |
 | etl_runs | ETL 실행 이력 | run_id, source, started_at, ended_at, status, extracted_count, loaded_count, error_message |
 
-> ⚠️ **현재 MVP 상태:** `market_job_postings`/`market_job_stacks`/`analytics_*`/`etl_runs` 6종은 Python ETL이 더 이상 Oracle에 적재하지 않는다. 크롤링 집계 결과는 `frontend/src/mocks/data/market.json`으로 export되어 프론트가 직접 조회한다(§7.7, §9). 위 6종은 추후 Spring Boot·Oracle 경로로 전환할 경우를 위한 스키마로 유지한다(DB_설계서.md §6 참고).
+> ✅ **현재 구현 상태:** `market_job_postings`/`market_job_stacks`/`analytics_*`/`etl_runs` 6종은 Python ETL(`etl/load/oracle_loader.py`)이 Oracle에 적재하고, Spring Boot가 `/api/market/*`·대시보드에서 읽기 전용으로 조회한다(§7.7, §9, DB_설계서.md §1·§5). 크롤링 집계는 `frontend/src/mocks/data/market.json`으로도 export되나 이는 프론트 단독 구동(MSW)용 산출물이며 현행 앱에서는 사용하지 않는다.
 
 ### 10.2 데이터 무결성
 
@@ -537,7 +547,7 @@ GET /api/market/region-distribution?from=&to=&position=
 GET /api/market/user-comparison?from=&to=
 ```
 
-> `/api/market/*`는 현재 MVP에서 Spring Boot·Oracle 없이 Python ETL이 생성한 정적 JSON을 프론트 MSW가 직접 서빙한다. `/api/dashboard/*`(개인 지표)는 기존 계획대로 Spring Boot·Oracle 경로를 사용한다.
+> `/api/market/*`와 `/api/dashboard/*`는 모두 Spring Boot·Oracle 경로를 사용한다. 시장 지표는 Python ETL이 적재한 `analytics_*` 집계 테이블을, 개인 지표는 사용자 도메인 테이블을 조회한다.
 
 ### 공통 응답 형식
 
@@ -584,7 +594,7 @@ GET /api/market/user-comparison?from=&to=
 ### 12.2 성능
 
 - 일반 목록 API는 3초 이내 응답을 목표로 한다.
-- 대시보드는 원본 크롤링 CSV를 실시간 전체 조회하지 않고, 개인 지표는 Oracle 집계 테이블을, 시장 지표는 ETL이 미리 생성한 정적 JSON을 조회한다.
+- 대시보드는 원본 크롤링 CSV를 실시간 전체 조회하지 않고, 개인 지표는 사용자 도메인 테이블을, 시장 지표는 ETL이 미리 적재한 Oracle 집계 테이블(`analytics_*`)을 조회한다.
 - LLM 생성은 일반 API와 분리하여 로딩 상태와 타임아웃을 처리한다.
 - 목록 API는 페이지네이션을 적용한다.
 - 차트 데이터는 필요한 필드만 반환한다.
@@ -692,7 +702,7 @@ GET /api/market/user-comparison?from=&to=
 - 월별 지원, 단계별 현황, 기술 스택, 지역 분석 중 최소 4개의 동적 차트가 동작한다.
 - 차트 집계값을 기반으로 Ollama가 분석 리포트를 생성한다.
 - Python ETL이 사람인 채용 공고를 크롤링·정제하고 누적 CSV로 저장한다.
-- 집계 결과가 JSON으로 export되어 React 대시보드(MSW)에서 조회된다.
+- 집계 결과가 Oracle `analytics_*`에 적재되어 Spring Boot `/api/market/*`를 거쳐 React 대시보드에서 조회된다.
 - 인증, 사용자 데이터 소유권, 파일 접근 권한 검증이 적용된다.
 
 ### 16.2 발표 완료 기준
@@ -708,7 +718,7 @@ GET /api/market/user-comparison?from=&to=
 7. 개인 지원 데이터와 시장 데이터 비교
 8. AI 분석 리포트 생성
 9. 크롤링 누적 CSV(raw/enriched) 및 ETL 로그 확인
-10. 집계 JSON과 대시보드 화면 연결 확인
+10. 집계 결과의 Oracle `analytics_*` 적재와 대시보드 화면 연결 확인
 
 ---
 
@@ -719,7 +729,7 @@ GET /api/market/user-comparison?from=&to=
 | 1일차 | 요구사항 확정, API·DB·화면 설계 | 라우팅, 공통 레이아웃, 로그인·대시보드 UI | 프로젝트 설정, Oracle 연결, Security 구조 | 사람인 HTML 셀렉터 확인, 크롤링 PoC |
 | 2일차 | 공고·지원 도메인 구현 | 공고 목록·등록·상세 | 사용자·공고·지원 CRUD, 인증 | 크롤러 구현, raw_jobs.csv 누적 저장 |
 | 3일차 | 분석 스키마 확정 | 지원 단계 UI, 차트 기본 구성 | 단계 변경, 분석 API 초안, 파일 업로드 | 스택/지역/직무 태깅, 마감일 파싱 |
-| 4일차 | AI 연동 | AI 질문 화면, 로딩·오류 처리 | Ollama 연동, PDF/TXT 추출, 질문 생성 | 기술 스택·지역별 집계, market.json export |
+| 4일차 | AI 연동 | AI 질문 화면, 로딩·오류 처리 | Ollama 연동, PDF/TXT 추출, 질문 생성 | 기술 스택·지역별 집계, Oracle `analytics_*` 적재 |
 | 5일차 | 통합 대시보드 | 동적 차트, 필터, 비교 화면 | 대시보드 API, LLM 리포트 API | 집계 검증, 프론트 연동 확인, 재실행 처리 |
 | 6일차 | 통합 테스트 | 반응형, 예외 화면, UX 보완 | 권한·보안·예외 테스트 | 데이터 품질 검증, 페이지 구간 분할 수집 시연 준비 |
 | 7일차 | 발표 준비 | 시연 화면·발표 자료 | 배포 또는 실행 스크립트, API 문서 | 크롤링·집계 실행 시연, 분석 결과 정리 |

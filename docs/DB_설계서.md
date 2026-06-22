@@ -19,7 +19,11 @@
 
 > 🤔 **왜 한 스키마에 같이 두나?** DA 플랜 §2 "Oracle: BE와 동일한 인스턴스·스키마 사용". BE는 시장/분석 테이블을 **읽기 전용**으로만 조회한다(요구사항 §12.2: 원본 HDFS 직접 조회 금지, 집계 테이블만 조회). 즉 `plzjob` 계정 하나에 16개가 공존하고, 쓰기 권한만 운영상 구분한다.
 
-> ⚠️ **현재 MVP 상태(미사용):** Python ETL이 사람인 크롤링 기반으로 바뀌면서(`etl/` 디렉터리 참고) 위 시장·분석 6개 테이블에는 **아무것도 적재되지 않는다**. 크롤링·태깅·집계 결과는 CSV로 누적 저장된 뒤 `frontend/src/mocks/data/market.json`으로 export되어 프론트 MSW가 직접 서빙한다(Spring Boot·Oracle 미경유, `plz_job_requirements.md` §7.7·§9 참고). 아래 §5의 6개 테이블 스키마는 **삭제하지 않고** 추후 "크롤링 결과를 Oracle에 적재 → Spring Boot가 서빙"하는 구조로 전환할 경우를 위해 유지한다.
+> ✅ **현재 구현 상태(사용 중):** Python ETL(`etl/`)이 사람인 크롤링·태깅·집계 후 `etl/load/oracle_loader.py`로 위 시장·분석 6개 테이블(`market_*`, `analytics_*`, `etl_runs`)에 **직접 적재**한다. Spring Boot의 `MarketService`/`DashboardController`가 이 집계 테이블을 **읽기 전용**으로 조회해 `/api/market/*`로 서빙하고, React 대시보드는 Vite 프록시(`/api` → `localhost:8080`)로 그 실제 백엔드 API를 호출한다. 즉 데이터 흐름은 **ETL → Oracle `analytics_*` → Spring Boot → React**다.
+>
+> ℹ️ ETL은 같은 집계를 `frontend/src/mocks/data/market.json`으로도 export하지만, 이는 백엔드 없이 프론트를 단독 구동할 때 쓰는 MSW용 오프라인 산출물이며 **현재 실행 앱에서는 MSW를 켜지 않는다**(`main.jsx`에 worker 시작 코드 없음). 현재의 정식 경로는 위 Oracle 경유다.
+>
+> ⚠️ 현재 `oracle_loader.py`는 집계행을 `position='ALL'`/`region='ALL'` 스코프로만 적재한다. 따라서 `/api/market/*`의 `position`·`region` 필터는 ALL 집계만 반환하며, 직무·지역 드릴다운(§5.2)은 ETL이 세부 스코프를 적재하도록 확장하면 활성화된다.
 
 ---
 
@@ -31,7 +35,7 @@
 - **INCREMENT BY 규칙**
   - BE 엔티티는 `allocationSize=50` → DB 시퀀스도 `INCREMENT BY 50` (Hibernate pooled optimizer와 일치, ID 충돌·검증오류 방지).
   - ETL 전용 테이블(JPA 엔티티 없음)은 `INCREMENT BY 1` (Python `oracledb`가 `NEXTVAL`로 직접 사용하기 편함).
-  - `analytics_stack_trends`/`analytics_region_jobs`는 BE 엔티티가 **시드 데이터 insert**(`AnalyticsSeeder`)를 하므로 예외적으로 `INCREMENT BY 50`.
+  - `analytics_stack_trends`/`analytics_region_jobs`는 BE 엔티티(`@SequenceGenerator allocationSize=50`)가 존재하므로 시퀀스도 `INCREMENT BY 50`으로 맞춘다. 실제 적재는 Python ETL(`oracle_loader.py`)이 해당 시퀀스의 `NEXTVAL`로 수행한다(BE는 읽기 전용).
 
 ### 2.2 감사 컬럼 + 소프트 삭제
 - `BaseEntity`(`@MappedSuperclass`) = `created_at` / `updated_at` / `deleted_at`.
@@ -151,9 +155,9 @@ erDiagram
 
 ---
 
-## 5. 테이블 상세 (시장·분석 — ETL 적재) ⚠️ 현재 MVP 미사용
+## 5. 테이블 상세 (시장·분석 — ETL 적재 / BE 읽기 전용) ✅ 현재 사용 중
 
-> 아래 6개 테이블은 §1의 주석대로 현재 크롤링 ETL이 적재하지 않는다. 스키마 설계 기록 및 향후 전환 옵션으로 남겨둔다.
+> 아래 6개 테이블은 §1 주석대로 Python ETL(`etl/load/oracle_loader.py`)이 적재하고 Spring Boot가 `/api/market/*`·대시보드에서 읽기 전용으로 조회한다.
 
 ### 5.1 `market_job_postings` / `market_job_stacks`
 - 공고: `(source, external_id)` **UNIQUE**(멱등 키, ETL-08). `external_id`는 외부 ID 또는 정규화 URL의 SHA-256. 표준 컬럼: `position`, `region`(=표준 시·도), `sigungu`, `posted_date`, `deadline`, `base_date`.
@@ -174,7 +178,7 @@ DA 플랜 **§4.4 권장안 채택** — 세 집계 테이블 모두 `position`�
 - **`analytics_region_jobs`의 `sigungu`(지역 드릴다운):** 별도 테이블 대신 `region_jobs`에 `sigungu` 컬럼을 추가. `sigungu='ALL'` 행 = 시·도 합계(필터 미지정 시 조회), 실제 `sigungu` = 구 단위. `region`(시·도)은 실제값만(ALL 없음). 단일 테이블이 SSOT이며 중복 저장이 없다.
 - **`'ALL'` 센티넬:** "전체"(직무·지역·시군구 무관) 집계행은 `position`/`region`/`sigungu`를 `NULL`이 아니라 `'ALL'`로 넣는다. → Oracle은 복합 UNIQUE에서 NULL을 서로 다른 값으로 취급해 중복 차단이 안 되기 때문. BE는 필터 미지정 시 `= 'ALL'` 행을 조회한다. **시·도 분포 조회 시 반드시 `AND sigungu='ALL'`** (없으면 구 단위 행까지 합산돼 중복).
 
-> ⚠️ **엔티티 보강 필요(1일차 합의 항목).** 현재 `백엔드 설명.md`의 `AnalyticsStackTrend`에는 `region`이, `AnalyticsRegionJob`에는 `position`·`sigungu`가 빠져 있다. API 필터(`stack-trends?region=`, `region-distribution?position=`)와 구 단위 드릴다운을 충족하려면 두 엔티티에 해당 필드를 추가하고, `position`/`region`/`sigungu`를 `nullable=false`(기본 `'ALL'`)로 맞춰야 한다. 본 DDL이 그 최종형이다.
+> ⚠️ **엔티티-DDL 부분 불일치(잔여 항목).** 현재 BE 엔티티 기준: `AnalyticsRegionJob`에는 `sigungu`가 추가됐지만 `position`이 아직 없고, `AnalyticsStackTrend`에는 `region`이 아직 없다(본 DDL에는 둘 다 있음, `DEFAULT 'ALL'`). 그래서 `MarketService`는 stack-trends를 `position` 기준으로만 필터하고 region-distribution은 `sigungu='ALL'` 행만 조회한다(§1의 "ALL 스코프만 적재"와 정합). API의 `stack-trends?region=`·`region-distribution?position=` 드릴다운을 켜려면 두 엔티티에 해당 필드를 추가하고 ETL이 세부 스코프를 적재하면 된다. 본 DDL이 그 목표 최종형이다.
 
 ### 5.3 `etl_runs` — 실행 이력(ETL-07·10)
 `source`, `started_at`(NN), `ended_at`, `status`(`RUNNING`/`SUCCESS`/`FAILED`), `extracted_count`, `loaded_count`, `base_date`, `error_message`. 인덱스 `(status, started_at DESC)`. → BE는 **최신 SUCCESS의 `base_date`**를 대시보드 `dataBaseDate`로 노출(ETL-10).
@@ -204,22 +208,25 @@ SELECT table_name FROM user_tables ORDER BY 1;   -- 16개 확인
 ```
 
 ### JPA `ddl-auto`와의 관계
-- `application.yaml`은 학습용 `ddl-auto: update`. 빈 스키마에서 BE를 기동하면 **엔티티 10종이 자동 생성**되지만, ETL 6종은 JPA가 모르므로 생성되지 않는다.
-- `db/schema.sql`을 한 번 실행하면 16종 전체를 만들 수 있다. 다만 **현재 MVP에서는 ETL 6종이 비어 있어도 무방**하다(§1·§5 주석 참고) — 크롤링 결과는 Oracle이 아니라 정적 JSON으로 프론트에 직접 전달되기 때문이다. ETL 6종은 향후 Spring Boot·Oracle 경유로 전환할 때를 위해 스키마만 준비해 둔다.
+- `application.yaml`은 학습용 `ddl-auto: update`. 빈 스키마에서 BE를 기동하면 **BE가 매핑한 엔티티(서비스 도메인 10종 + analytics 2종)가 자동 생성**되지만, JPA 엔티티가 없는 `market_*`/`analytics_monthly_jobs`/`etl_runs`는 생성되지 않는다.
+- 따라서 **ETL 적재 전에 `db/schema.sql`을 한 번 실행**해 16종 전체를 만들어 두어야 한다. ETL(`oracle_loader.py`)이 `market_*`·`analytics_*`·`etl_runs`를 채우고, BE가 이를 조회한다(§1·§5). 시장/대시보드 화면이 동작하려면 이 6종이 채워져 있어야 한다.
 - 운영 지향이면 `ddl-auto: validate` + 본 DDL을 형상관리(Flyway 등)하는 방식으로 전환한다.
 
 ---
 
 ## 8. 검증 체크리스트
 
-### 현재 MVP(서비스 도메인만 사용)
-- [ ] `db/schema.sql` 무오류 실행, `user_tables` 16개(ETL 6종은 비어 있어도 정상).
+### 스키마·서비스 도메인
+- [ ] `db/schema.sql` 무오류 실행, `user_tables` 16개.
+- [ ] `user_sequences` 16개(BE 10 + analytics 2 @50 / ETL 4 @1).
 - [ ] `uq_user_social`, `uq_applications_job` 존재.
 - [ ] BE 기동(`ddl-auto: update`) 시 엔티티-테이블 매핑 오류 없음.
-- [ ] `etl/run.py` 실행 결과(`frontend/src/mocks/data/market.json`)가 `/api/market/*` MSW 응답 계약과 일치.
 
-### 향후 Spring Boot·Oracle 경유 전환 시(현재 미해당)
-- [ ] `user_sequences` 16개(BE 12 @50 / ETL 4 @1).
+### 시장·분석(ETL → Oracle → BE)
 - [ ] `uq_market_job`, analytics 복합 UNIQUE 4종 존재.
-- [ ] `analytics_*` 시드(`AnalyticsSeeder`) insert 성공 → `/api/market/*` 조회 확인.
-- [ ] 엔티티 보강(§5.2 ⚠️): `AnalyticsStackTrend.region`, `AnalyticsRegionJob.position` 추가 반영.
+- [ ] `etl/run.py` 실행 후 `market_*`/`analytics_*`/`etl_runs`에 행이 적재됨.
+- [ ] `/api/market/stack-trends`·`/region-distribution`·`/user-comparison` 가 적재값을 반환(빈 테이블이면 빈 차트).
+- [ ] `etl_runs` 최신 `SUCCESS`의 `base_date`가 대시보드 `dataBaseDate`로 노출(ETL-10).
+
+### 잔여(드릴다운 확장 시, §5.2 ⚠️)
+- [ ] `AnalyticsStackTrend.region`, `AnalyticsRegionJob.position` 엔티티 추가 + ETL 세부 스코프 적재.

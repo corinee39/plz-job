@@ -26,7 +26,8 @@ export default function JobBoardPage() {
 
   // JOB-07 — 단계 변경(드롭). 낙관적 업데이트로 카드가 즉시 이동한다.
   const stageMutation = useMutation({
-    mutationFn: ({ applicationId, toStage }) => changeStage(applicationId, { toStage }),
+    mutationFn: ({ applicationId, toStage }) =>
+      changeStage(applicationId, { toStage }),
     onMutate: async ({ applicationId, toStage }) => {
       await qc.cancelQueries({ queryKey: ["jobPostings"] });
       const prev = qc.getQueriesData({ queryKey: ["jobPostings"] });
@@ -35,7 +36,9 @@ export default function JobBoardPage() {
         return {
           ...old,
           content: old.content.map((c) =>
-            c.applicationId === applicationId ? { ...c, currentStage: toStage } : c
+            c.applicationId === applicationId
+              ? { ...c, currentStage: toStage }
+              : c,
           ),
         };
       });
@@ -50,8 +53,14 @@ export default function JobBoardPage() {
 
   // 드롭: 다른 phase로 옮길 때만 그 phase의 대표 단계로 변경. 같은 phase 내(예: 서류 합격↔불합격)면 no-op.
   const handleDrop = (phase) => {
-    if (dragged && !phase.stages.includes(dragged.currentStage ?? dragged.stage)) {
-      stageMutation.mutate({ applicationId: dragged.applicationId, toStage: phase.dropTarget });
+    if (
+      dragged &&
+      !phase.stages.includes(dragged.currentStage ?? dragged.stage)
+    ) {
+      stageMutation.mutate({
+        applicationId: dragged.applicationId,
+        toStage: phase.dropTarget,
+      });
     }
     setDragged(null);
   };
@@ -59,7 +68,7 @@ export default function JobBoardPage() {
   const postings = data?.content ?? [];
   const byPhase = STAGE_PHASES.reduce((acc, phase) => {
     acc[phase.key] = postings.filter((p) =>
-      phase.stages.includes(p.currentStage ?? p.stage)
+      phase.stages.includes(p.currentStage ?? p.stage),
     );
     return acc;
   }, {});
@@ -68,10 +77,15 @@ export default function JobBoardPage() {
     <PageShell
       title="지원 보드"
       icon={Columns3}
-      description="카드를 드래그해 단계를 진행합니다. 합격·불합격 등 세부 상태는 카드 배지로 표시되며, 정확한 변경은 상세 페이지에서 합니다."
+      description="카드를 드래그해 단계를 진행합니다. 합격·불합격 등 세부 상태는 카드 배지로 표시됩니다."
     >
       <div className="flex justify-end">
-        <LinkButton to="/job-postings" variant="secondary" size="sm" icon={List}>
+        <LinkButton
+          to="/job-postings"
+          variant="secondary"
+          size="sm"
+          icon={List}
+        >
           목록 보기
         </LinkButton>
       </div>
@@ -98,7 +112,10 @@ export default function JobBoardPage() {
                 cards={byPhase[phase.key]}
                 onDrop={() => handleDrop(phase)}
                 onDragStartCard={setDragged}
-                isDropTarget={dragged && !phase.stages.includes(dragged.currentStage ?? dragged.stage)}
+                isDropTarget={
+                  dragged &&
+                  !phase.stages.includes(dragged.currentStage ?? dragged.stage)
+                }
               />
             ))}
           </div>
@@ -138,7 +155,11 @@ function BoardColumn({ phase, cards, onDrop, onDragStartCard, isDropTarget }) {
           </p>
         ) : (
           cards.map((card) => (
-            <BoardCard key={card.jobPostingId} card={card} onDragStart={onDragStartCard} />
+            <BoardCard
+              key={card.jobPostingId}
+              card={card}
+              onDragStart={onDragStartCard}
+            />
           ))
         )}
       </div>
@@ -157,7 +178,9 @@ function BoardCard({ card, onDragStart }) {
       onDragStart={() => onDragStart(card)}
       className={`group relative cursor-grab rounded-lg border border-l-4 border-zinc-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing dark:border-zinc-700 dark:bg-zinc-900 ${stageAccentClass(stage)}`}
     >
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">{card.companyName}</p>
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        {card.companyName}
+      </p>
       <Link
         to={`/job-postings/${card.jobPostingId}`}
         className="mt-0.5 block text-sm font-medium text-zinc-800 hover:underline dark:text-zinc-100"
@@ -201,7 +224,8 @@ function BoardCard({ card, onDragStart }) {
 
 function stageAccentClass(stage) {
   if (stage?.endsWith("_FAIL")) return "border-l-red-300 dark:border-l-red-800";
-  if (stage?.endsWith("_PASS")) return "border-l-emerald-300 dark:border-l-emerald-800";
+  if (stage?.endsWith("_PASS"))
+    return "border-l-emerald-300 dark:border-l-emerald-800";
   if (stage === "WITHDRAWN") return "border-l-zinc-300 dark:border-l-zinc-700";
   return "border-l-blue-300 dark:border-l-blue-800";
 }

@@ -1,9 +1,9 @@
 # API 명세서
 
 **프로젝트명:** Plz-Job — 개발자 취업 준비생용 취업 공고·지원 기록 및 데이터 분석 플랫폼
-**문서 버전:** v2.0
-**작성일:** 2026-06-16
-**문서 상태:** 초안(Draft)
+**문서 버전:** v2.1
+**작성일:** 2026-06-22
+**문서 상태:** 최종본
 **기준 문서:** `docs/plz_job_requirements.md`
 
 > 본 명세서는 요구사항 정의서의 **1주일 MVP** 범위(§4.1, §20)를 대상으로 하며, §11(API 초안)·§10(데이터 모델)을 상세화한 것이다.
@@ -47,28 +47,30 @@
 | 15 | 문서 | POST | `/documents` | ○ | DOC-01 |
 | 16 | 문서 | GET | `/documents` | ○ | DOC-01 |
 | 17 | 문서 | GET | `/documents/{documentId}` | ○ | DOC-02·03 |
-| 18 | 문서 | POST | `/documents/{documentId}/versions` | ○ | DOC-01·02·05·06 |
-| 19 | 문서 | GET | `/document-versions/{versionId}/download` | ○ | DOC-04 |
-| 20 | 문서 | DELETE | `/document-versions/{versionId}` | ○ | DOC-04 |
-| 21 | 문서 | POST | `/applications/{applicationId}/documents/{versionId}` | ○ | DOC-03 |
-| 22 | 일정 | POST | `/applications/{applicationId}/schedules` | ○ | PROC-01 |
-| 23 | 일정 | GET | `/schedules?from=&to=` | ○ | PROC-02·05 |
-| 24 | 일정 | PUT | `/schedules/{scheduleId}` | ○ | PROC-01 |
-| 25 | 일정 | DELETE | `/schedules/{scheduleId}` | ○ | PROC-01 |
-| 26 | 회고 | POST | `/applications/{applicationId}/retrospectives` | ○ | PROC-03·04 |
-| 27 | 회고 | GET | `/applications/{applicationId}/retrospectives` | ○ | PROC-04 |
-| 28 | 회고 | PUT | `/retrospectives/{retrospectiveId}` | ○ | PROC-03 |
-| 29 | 회고 | DELETE | `/retrospectives/{retrospectiveId}` | ○ | PROC-03 |
-| 30 | AI | POST | `/ai/applications/{applicationId}/interview-questions` | ○ | AI-02·03·04·06 |
-| 31 | AI | POST | `/ai/dashboard-report` | ○ | AI-05·06 |
-| 32 | AI | GET | `/ai/generations?applicationId=&type=` | ○ | AI-09 |
-| 33 | AI | GET | `/ai/health` | ○ | AI-01 |
-| 34 | 대시보드 | GET | `/dashboard/summary?from=&to=` | ○ | DASH-03, ETL-10 |
-| 35 | 대시보드 | GET | `/dashboard/monthly-applications?from=&to=` | ○ | DASH-01 |
-| 36 | 대시보드 | GET | `/dashboard/stage-conversions?from=&to=` | ○ | DASH-02·03 |
-| 37 | 시장 | GET | `/market/stack-trends?from=&to=&position=&region=` | ○ | DASH-04 |
-| 38 | 시장 | GET | `/market/region-distribution?from=&to=&position=` | ○ | DASH-05 |
-| 39 | 시장 | GET | `/market/user-comparison?from=&to=` | ○ | DASH-06 |
+| 18 | 문서 | DELETE | `/documents/{documentId}` | ○ | DOC-04 |
+| 19 | 문서 | POST | `/documents/{documentId}/versions` | ○ | DOC-01·02·05·06 |
+| 20 | 문서 | GET | `/document-versions/{versionId}/download` | ○ | DOC-04 |
+| 21 | 문서 | DELETE | `/document-versions/{versionId}` | ○ | DOC-04 |
+| 22 | 문서 | POST | `/applications/{applicationId}/documents/{versionId}` | ○ | DOC-03 |
+| 23 | 문서 | DELETE | `/applications/{applicationId}/documents/{versionId}` | ○ | DOC-03 |
+| 24 | 일정 | POST | `/applications/{applicationId}/schedules` | ○ | PROC-01 |
+| 25 | 일정 | GET | `/schedules?from=&to=` | ○ | PROC-02·05 |
+| 26 | 일정 | PUT | `/schedules/{scheduleId}` | ○ | PROC-01 |
+| 27 | 일정 | DELETE | `/schedules/{scheduleId}` | ○ | PROC-01 |
+| 28 | 회고 | POST | `/applications/{applicationId}/retrospectives` | ○ | PROC-03·04 |
+| 29 | 회고 | GET | `/applications/{applicationId}/retrospectives` | ○ | PROC-04 |
+| 30 | 회고 | PUT | `/retrospectives/{retrospectiveId}` | ○ | PROC-03 |
+| 31 | 회고 | DELETE | `/retrospectives/{retrospectiveId}` | ○ | PROC-03 |
+| 32 | AI | POST | `/ai/applications/{applicationId}/interview-questions` | ○ | AI-02·03·04·06 |
+| 33 | AI | POST | `/ai/dashboard-report` | ○ | AI-05·06 |
+| 34 | AI | GET | `/ai/generations?applicationId=&type=` | ○ | AI-09 |
+| 35 | AI | GET | `/ai/health` | ○ | AI-01 |
+| 36 | 대시보드 | GET | `/dashboard/summary?from=&to=` | ○ | DASH-03, ETL-10 |
+| 37 | 대시보드 | GET | `/dashboard/monthly-applications?from=&to=` | ○ | DASH-01 |
+| 38 | 대시보드 | GET | `/dashboard/stage-conversions?from=&to=` | ○ | DASH-02·03 |
+| 39 | 시장 | GET | `/market/stack-trends?from=&to=&position=&region=` | ○ | DASH-04 |
+| 40 | 시장 | GET | `/market/region-distribution?from=&to=&position=` | ○ | DASH-05 |
+| 41 | 시장 | GET | `/market/user-comparison?from=&to=` | ○ | DASH-06 |
 
 ---
 
@@ -496,6 +498,13 @@ https://{host}/api
 
 ---
 
+#### [DOC] 문서 삭제
+- **설명:** 문서(논리 단위)를 소프트 삭제. 하위 버전·제출 연결도 함께 정리된다. (DOC-04)
+- `DELETE /documents/{documentId}` · 인증 ○ → `204 No Content`
+**에러:** `403 FORBIDDEN` / `404 DOCUMENT_NOT_FOUND`
+
+---
+
 #### [DOC] 버전 업로드 (파일)
 - **설명:** PDF/TXT 업로드 → 원본 저장 + 텍스트 추출(분리 저장) (DOC-01·02·05·06)
 - `POST /documents/{documentId}/versions` · 인증 ○ · `multipart/form-data`
@@ -532,13 +541,15 @@ https://{host}/api
 
 ---
 
-#### [DOC] 공고에 제출 문서 연결
-- `POST /applications/{applicationId}/documents/{versionId}` · 인증 ○ (DOC-03)
+#### [DOC] 공고에 제출 문서 연결 / 연결 해제
+- `POST /applications/{applicationId}/documents/{versionId}` · 인증 ○ → 제출 문서로 연결 (DOC-03)
+- `DELETE /applications/{applicationId}/documents/{versionId}` · 인증 ○ → 연결 해제(문서 버전 자체는 보존) → `204 No Content`
 
-**Response `201`**
+**POST Response `201`**
 ```json
 { "success": true, "data": { "applicationId": 7001, "versionId": 3102 }, "error": null, "timestamp": "2026-06-16T15:00:00+09:00" }
 ```
+**에러:** `403 FORBIDDEN` / `404 APPLICATION_NOT_FOUND` · `404 DOCUMENT_NOT_FOUND`
 
 ---
 
@@ -898,5 +909,6 @@ https://{host}/api
 > **변경 이력**
 > | 버전 | 일자 | 내용 |
 > |---|---|---|
+> | v2.1 | 2026-06-22 | 구현 반영 — 누락 엔드포인트 2종 추가(`DELETE /documents/{documentId}` 문서 삭제, `DELETE /applications/{applicationId}/documents/{versionId}` 제출 문서 연결 해제), 요약 표 재번호(41종). 시장/분석 API는 ETL이 Oracle `analytics_*`에 적재한 값을 Spring Boot가 조회하는 현행 구조 그대로 |
 > | v2.0 | 2026-06-16 | Plz-Job 요구사항(`plz_job_requirements.md`) 기준 전면 개정 — 소셜 전용 인증, 상세 단계 코드, 단계 이력·일정·회고·문서 버전, AI 리포트, 대시보드/시장 분석(ETL 집계 조회), `/api` 베이스·`timestamp` 봉투 반영 |
 > | v1.0 | 2026-06-16 | 초안(DevTrack, `요구사항_정의서.md` 기반) |
