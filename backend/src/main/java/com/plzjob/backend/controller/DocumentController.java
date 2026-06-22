@@ -38,6 +38,13 @@ public class DocumentController {
         return ResponseEntity.ok(ApiResponse.ok(documentService.detail(userId, documentId)));
     }
 
+    @DeleteMapping("/documents/{documentId}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @LoginUserId Long userId, @PathVariable Long documentId) {
+        documentService.deleteDocument(userId, documentId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping(value = "/documents/{documentId}/versions", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<DocumentVersionResponse>> upload(
             @LoginUserId Long userId, @PathVariable Long documentId,

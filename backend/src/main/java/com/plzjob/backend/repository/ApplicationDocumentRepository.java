@@ -15,4 +15,7 @@ public interface ApplicationDocumentRepository extends JpaRepository<Application
     boolean existsByApplicationIdAndVersion(Long applicationId, DocumentVersion version);
 
     Optional<ApplicationDocument> findByApplicationIdAndVersionId(Long applicationId, Long versionId);
+
+    // 문서/버전 삭제 시 해당 버전을 참조하는 제출 문서 링크(하드 삭제)를 모두 제거한다.
+    void deleteByVersionId(Long versionId);
 }

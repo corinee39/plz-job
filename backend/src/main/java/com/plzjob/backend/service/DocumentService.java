@@ -100,7 +100,22 @@ public class DocumentService {
     }
 
     @Transactional
-    public void deleteVersion(Long userId, Long versionId) { findOwnedVersion(userId, versionId).delete(); }
+    public void deleteVersion(Long userId, Long versionId) {
+        DocumentVersion v = findOwnedVersion(userId, versionId);
+        applicationDocumentRepository.deleteByVersionId(v.getId()); // 제출 문서 링크 정리
+        v.delete();
+    }
+
+    // 문서(논리 단위) 삭제 — 버전·제출 문서 링크도 함께 정리한다 (DOC-01).
+    @Transactional
+    public void deleteDocument(Long userId, Long documentId) {
+        Document doc = findOwnedDocument(userId, documentId);
+        for (DocumentVersion v : versionRepository.findByDocumentId(doc.getId())) {
+            applicationDocumentRepository.deleteByVersionId(v.getId()); // 공고에 연결된 제출 문서 링크(하드 삭제)
+            v.delete();                                                  // 버전 소프트 삭제
+        }
+        doc.delete();                                                    // 문서 소프트 삭제
+    }
 
     @Transactional
     public void linkToApplication(Long userId, Long applicationId, Long versionId) {
