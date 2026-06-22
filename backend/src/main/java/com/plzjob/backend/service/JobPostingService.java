@@ -85,7 +85,7 @@ public class JobPostingService {
                 req.getDeadline(), req.getTechStacks(), req.getDescription());
         app.updateAppliedAt(req.getAppliedAt() != null ? req.getAppliedAt().atStartOfDay() : null);
         if (req.getFavorite() != null) p.toggleFavorite(req.getFavorite());
-        return JobPostingDetailResponse.from(app, submittedDocuments(app.getId()));
+        return JobPostingDetailResponse.from(app, applicationDocumentRepository.findByApplicationId(app.getId()));
     }
 
     @Transactional
